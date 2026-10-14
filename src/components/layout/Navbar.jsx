@@ -317,8 +317,8 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 {activeRole === 'STUDENT'
                   ? 'Student Portal'
                   : activeRole === 'FACULTY_COORDINATOR'
-                  ? 'Organiser Portal'
-                  : 'College Admin'}
+                    ? 'Organiser Portal'
+                    : 'College Admin'}
               </span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                 {currentUser?.name || currentUser?.fullName || institutionInfo.shortName}
