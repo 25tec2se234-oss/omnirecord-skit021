@@ -72,7 +72,7 @@ export const LandingPage = () => {
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                OmniRecord
+                Pehchaan
               </div>
               <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--primary-orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 SKIT021 Platform
@@ -139,8 +139,8 @@ export const LandingPage = () => {
               marginBottom: '1.25rem'
             }}
           >
-            Every Student Achievement. <br />
-            <span style={{ color: 'var(--primary-orange)' }}>One Verified Digital Record.</span>
+            Your Journey. Your Proof. <br />
+            <span style={{ color: 'var(--primary-orange)' }}>Our Authenticity.</span>
           </h1>
 
           <p
@@ -202,7 +202,7 @@ export const LandingPage = () => {
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} />
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981' }} />
                 <span style={{ marginLeft: 12, fontSize: '0.78rem', color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
-                  https://omnirecord.skit.ac.in/dashboard
+                  https://pehchaan.skit.ac.in/dashboard
                 </span>
               </div>
               <span className="badge badge-orange" style={{ fontSize: '0.7rem' }}>
@@ -290,7 +290,7 @@ export const LandingPage = () => {
               From Fragmented Spreadsheets to Verified Excellence
             </h2>
             <p style={{ color: 'var(--text-secondary)', maxWidth: 640, margin: '0.5rem auto 0' }}>
-              Compare the friction of traditional paper and ad-hoc spreadsheets against OmniRecord's centralized digital architecture.
+              Compare the friction of traditional paper and ad-hoc spreadsheets against Pehchaan's centralized digital architecture.
             </p>
           </div>
 
@@ -334,7 +334,7 @@ export const LandingPage = () => {
                   <CheckCircle2 size={20} />
                 </div>
                 <div>
-                  <h4 style={{ color: '#9A3412', fontWeight: 700, fontSize: '1.1rem' }}>AFTER: OmniRecord Centralization</h4>
+                  <h4 style={{ color: '#9A3412', fontWeight: 700, fontSize: '1.1rem' }}>AFTER: Pehchaan Centralization</h4>
                   <p style={{ color: '#C2410C', fontSize: '0.8rem' }}>Unified Institutional Architecture</p>
                 </div>
               </div>
@@ -596,7 +596,7 @@ export const LandingPage = () => {
             <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--primary-orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GraduationCap size={16} />
             </div>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>OmniRecord</span>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pehchaan</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>• SKIT021 Hackathon Prototype</span>
           </div>
 

@@ -112,7 +112,7 @@ export const HelpCenter = () => {
               Interactive Walkthrough
             </span>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              New to OmniRecord? Experience the Guided Product Tour
+              New to Pehchaan? Experience the Guided Product Tour
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginTop: 4, maxWidth: 640 }}>
               Takes approximately 45 seconds to understand the student registry, activity catalog, faculty verification queue, and institutional accreditation reporting.

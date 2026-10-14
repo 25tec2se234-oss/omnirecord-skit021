@@ -127,7 +127,7 @@ export const AppProvider = ({ children }) => {
       console.warn('LocalStorage error', e);
     }
     addToast({
-      title: "Welcome to OmniRecord!",
+      title: "Welcome to Pehchaan!",
       message: "You're now ready to explore student records, verification, and analytics.",
       type: "success"
     });

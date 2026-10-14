@@ -76,7 +76,7 @@ export const ProductOnboardingModal = () => {
       id: "understand",
       badge: "Unified Architecture",
       title: "Everything Connected in One Place",
-      description: "OmniRecord eliminates siloed data by creating relational links between students, departments, activities, and verified credentials.",
+      description: "Pehchaan eliminates siloed data by creating relational links between students, departments, activities, and verified credentials.",
       icon: Layers,
       accentColor: "#2563EB",
       details: [
