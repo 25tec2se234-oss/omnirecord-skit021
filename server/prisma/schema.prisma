@@ -88,6 +88,17 @@ enum SubscriptionStatus {
   INCOMPLETE
 }
 
+enum PortfolioTemplate {
+  CLEAN_MINIMAL
+  TECH_DEV_CARD
+  ACADEMIC_PROFESSIONAL
+}
+
+enum PortfolioVisibility {
+  PRIVATE
+  PUBLIC
+}
+
 // --------------------------------------------------
 // 1. INSTITUTION (TENANT ROOT)
 // --------------------------------------------------
@@ -118,6 +129,7 @@ model Institution {
   notifications        Notification[]
   invitations          Invitation[]
   subscription         Subscription?
+  portfolios           StudentPortfolio[]
 
   @@index([status])
   @@index([code])
@@ -230,6 +242,7 @@ model StudentProfile {
   user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   department           Department            @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   participationRecords ParticipationRecord[]
+  portfolio            StudentPortfolio?
 
   @@unique([institutionId, studentId])
   @@unique([institutionId, email])
@@ -295,8 +308,9 @@ model ParticipationRecord {
   studentProfile StudentProfile       @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
   activity       Activity             @relation(fields: [activityId], references: [id], onDelete: Restrict)
   department     Department           @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  evidenceFiles  EvidenceFile[]
-  reviews        VerificationReview[]
+  evidenceFiles        EvidenceFile[]
+  reviews              VerificationReview[]
+  portfolioCredentials PortfolioCredential[]
 
   @@unique([institutionId, recordNumber])
   @@index([institutionId, verificationStatus])
@@ -470,4 +484,49 @@ model SubscriptionEvent {
 
   @@index([subscriptionId])
   @@index([eventId])
+}
+
+// --------------------------------------------------
+// 14. STUDENT PORTFOLIO (AUTOMATED PORTFOLIO BUILDER)
+// --------------------------------------------------
+
+model StudentPortfolio {
+  id               String              @id @default(cuid())
+  institutionId    String
+  studentProfileId String              @unique
+  template         PortfolioTemplate   @default(CLEAN_MINIMAL)
+  visibility       PortfolioVisibility @default(PRIVATE)
+  headline         String?
+  bio              String?
+  customSlug       String?             @unique
+  publishedAt      DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  institution    Institution           @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  studentProfile StudentProfile        @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  credentials    PortfolioCredential[]
+
+  @@index([institutionId])
+  @@index([studentProfileId])
+  @@index([visibility])
+  @@index([customSlug])
+}
+
+model PortfolioCredential {
+  id           String   @id @default(cuid())
+  portfolioId  String
+  recordId     String
+  displayOrder Int      @default(0)
+  highlighted  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  portfolio StudentPortfolio    @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  record    ParticipationRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, recordId])
+  @@index([portfolioId])
+  @@index([recordId])
+  @@index([displayOrder])
 }

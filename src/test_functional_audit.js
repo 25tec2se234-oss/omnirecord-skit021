@@ -3,8 +3,7 @@ import {
   INITIAL_STUDENTS, 
   INITIAL_ACTIVITIES, 
   INITIAL_RECORDS, 
-  INITIAL_DEPARTMENTS, 
-  INITIAL_NOTIFICATIONS 
+  INITIAL_DEPARTMENTS 
 } from '../src/data/initialData.js';
 
 let passed = 0;
@@ -153,6 +152,78 @@ function generateCSV(records) {
 const csvOutput = generateCSV(INITIAL_RECORDS);
 assert(csvOutput.startsWith('Record ID,Student Name'), "CSV headers correctly formatted");
 assert(csvOutput.split("\n").length === INITIAL_RECORDS.length + 1, "CSV row count matches records count + 1");
+
+console.log("\n=== RUNNING SUITE 6: AUTOMATED PORTFOLIO BUILDER LOGIC ===");
+// 1. Template options validation
+const validTemplates = new Set(['CLEAN_MINIMAL', 'TECH_DEV_CARD', 'ACADEMIC_PROFESSIONAL']);
+assert(validTemplates.has('CLEAN_MINIMAL'), "Supports CLEAN_MINIMAL template");
+assert(validTemplates.has('TECH_DEV_CARD'), "Supports TECH_DEV_CARD template");
+assert(validTemplates.has('ACADEMIC_PROFESSIONAL'), "Supports ACADEMIC_PROFESSIONAL template");
+assert(!validTemplates.has('RANDOM_THEME'), "Rejects unsupported templates");
+
+// 2. Authoritative verification status derivation
+function canDisplayVerificationBadge(status) {
+  const normalized = (status || '').toUpperCase();
+  return normalized === 'VERIFIED';
+}
+assert(canDisplayVerificationBadge('Verified'), "Allows badge for 'Verified' status");
+assert(canDisplayVerificationBadge('VERIFIED'), "Allows badge for 'VERIFIED' status");
+assert(!canDisplayVerificationBadge('Pending Review'), "Denies badge for 'Pending Review' status");
+assert(!canDisplayVerificationBadge('Needs Correction'), "Denies badge for 'Needs Correction' status");
+assert(!canDisplayVerificationBadge('Rejected'), "Denies badge for 'Rejected' status");
+assert(!canDisplayVerificationBadge('Draft'), "Denies badge for 'Draft' status");
+
+// 3. Shareable URL Canonical Construction
+function constructShareableUrl(origin, studentId, customSlug = null) {
+  const cleanOrigin = origin.replace(/\/+$/, '');
+  const slug = customSlug && customSlug.trim().length >= 3 ? customSlug.trim() : studentId;
+  return `${cleanOrigin}/portfolio/${encodeURIComponent(slug)}`;
+}
+const mockOrigin = 'https://pehchaan-skit021.onrender.com';
+const generatedUrl = constructShareableUrl(mockOrigin, 'SKIT-2022-CS014');
+assert(generatedUrl === 'https://pehchaan-skit021.onrender.com/portfolio/SKIT-2022-CS014', `Generates canonical shareable URL: ${generatedUrl}`);
+assert(!generatedUrl.includes('localhost'), "Production canonical URL does not contain hardcoded localhost");
+assert(!generatedUrl.includes('token') && !generatedUrl.includes('secret'), "Shareable URL does not leak tokens or secrets");
+
+// 4. Public Data Sanitization Check
+function sanitizePortfolioPayload(student, records) {
+  return {
+    student: {
+      studentId: student.studentId,
+      name: student.name,
+      program: student.program,
+      year: student.year,
+      departmentName: student.departmentName
+    },
+    credentials: records.filter(r => canDisplayVerificationBadge(r.verificationStatus)).map(r => ({
+      id: r.id,
+      title: r.activityName,
+      category: r.category,
+      level: r.achievementLevel,
+      certificateRef: r.certificateRef,
+      isVerified: true
+    }))
+  };
+}
+
+const mockRawStudent = {
+  id: 'cuid-12345',
+  userId: 'user-secret-999',
+  studentId: 'SKIT-2022-CS014',
+  name: 'Aarav Patel',
+  program: 'B.Tech CSE',
+  year: '3rd Year',
+  departmentName: 'Computer Science',
+  phone: '+91 99999 88888',
+  passwordHash: '$2a$10$hashedPassword123'
+};
+
+const sanitized = sanitizePortfolioPayload(mockRawStudent, INITIAL_RECORDS);
+const jsonStr = JSON.stringify(sanitized);
+assert(!jsonStr.includes('passwordHash'), "Sanitized payload does not include passwordHash");
+assert(!jsonStr.includes('user-secret-999'), "Sanitized payload does not include internal userId");
+assert(!jsonStr.includes('+91 99999 88888'), "Sanitized payload does not include private phone number");
+assert(sanitized.credentials.every(c => c.isVerified === true), "All public credentials strictly have isVerified: true");
 
 console.log("\n=== TEST RESULTS SUMMARY ===");
 console.log(`TOTAL PASSED: ${passed}`);

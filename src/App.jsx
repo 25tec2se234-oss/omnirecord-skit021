@@ -24,6 +24,8 @@ import { AnalyticsReports } from './components/analytics/AnalyticsReports';
 import { NotificationsCenter } from './components/notifications/NotificationsCenter';
 import { SettingsPage } from './components/settings/SettingsPage';
 import { HelpCenter } from './components/help/HelpCenter';
+import { PortfolioBuilder } from './components/portfolio/PortfolioBuilder';
+import { PublicPortfolioPage } from './components/portfolio/PublicPortfolioPage';
 
 const MainAppLayout = () => {
   const {
@@ -33,7 +35,9 @@ const MainAppLayout = () => {
     setIsOnboardingOpen,
     institutionInfo,
     isAuthModalOpen,
-    setIsAuthModalOpen
+    setIsAuthModalOpen,
+    publicPortfolioStudentId,
+    navigateTo
   } = useApp();
 
   const [isGlobalRecordModalOpen, setIsGlobalRecordModalOpen] = useState(false);
@@ -70,6 +74,19 @@ const MainAppLayout = () => {
     );
   }
 
+  // If on public portfolio route, render dedicated unauthenticated portfolio view
+  if (currentRoute === 'public-portfolio') {
+    return (
+      <>
+        <PublicPortfolioPage
+          studentId={publicPortfolioStudentId}
+          onNavigateHome={() => navigateTo('landing')}
+        />
+        <ToastContainer />
+      </>
+    );
+  }
+
   const renderRouteContent = () => {
     switch (currentRoute) {
       case 'dashboard':
@@ -81,9 +98,11 @@ const MainAppLayout = () => {
       case 'organiser-dashboard':
         return <OrganiserPortal />;
       case 'student-dashboard':
-      case 'student-portfolio':
       case 'student-submit':
         return <StudentPortal />;
+      case 'student-portfolio':
+      case 'portfolio-builder':
+        return <PortfolioBuilder />;
       case 'students':
         return <StudentManagement />;
       case 'staff':

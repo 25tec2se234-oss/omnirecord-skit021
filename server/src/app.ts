@@ -22,6 +22,8 @@ import analyticsRoutes from './modules/analytics/analytics.routes.js';
 import notificationRoutes from './modules/notifications/notifications.routes.js';
 import auditRoutes from './modules/audit/audit.routes.js';
 import subscriptionRoutes from './modules/subscriptions/subscriptions.routes.js';
+import portfolioRoutes from './modules/portfolio/portfolio.routes.js';
+import publicPortfolioRoutes from './modules/portfolio/publicPortfolios.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -159,6 +161,8 @@ export function createApp(): Express {
   app.use(`${env.API_PREFIX}/notifications`, notificationRoutes);
   app.use(`${env.API_PREFIX}/audit`, auditRoutes);
   app.use(`${env.API_PREFIX}/subscriptions`, subscriptionRoutes);
+  app.use(`${env.API_PREFIX}/portfolio`, portfolioRoutes);
+  app.use(`${env.API_PREFIX}/public/portfolios`, publicPortfolioRoutes);
 
   // 8. 404 Handler
   app.use((_req: Request, res: Response) => {

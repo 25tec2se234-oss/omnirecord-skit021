@@ -31,7 +31,8 @@ export const StudentPortal = () => {
     departments,
     currentUser,
     addRecord,
-    addToast
+    addToast,
+    navigateTo
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'submit'
@@ -175,10 +176,18 @@ export const StudentPortal = () => {
             <Button
               variant="outline"
               size="sm"
+              icon={Sparkles}
+              onClick={() => navigateTo('portfolio-builder')}
+            >
+              Portfolio Builder
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               icon={Award}
               onClick={() => setActiveTab('portfolio')}
             >
-              My Portfolio ({verifiedRecords.length})
+              My Records ({verifiedRecords.length})
             </Button>
           </div>
         </div>
@@ -359,18 +368,28 @@ export const StudentPortal = () => {
               </p>
             </div>
 
-            <select
-              className="form-control"
-              style={{ width: 'auto', fontSize: '0.82rem', height: 34 }}
-              value={portfolioCategoryFilter}
-              onChange={(e) => setPortfolioCategoryFilter(e.target.value)}
-            >
-              <option value="ALL">All Categories</option>
-              <option value="Technical">Technical</option>
-              <option value="Cultural">Cultural</option>
-              <option value="Sports">Sports</option>
-              <option value="Social / Community">Social / Community</option>
-            </select>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={Sparkles}
+                onClick={() => navigateTo('portfolio-builder')}
+              >
+                Launch Portfolio Builder
+              </Button>
+              <select
+                className="form-control"
+                style={{ width: 'auto', fontSize: '0.82rem', height: 34 }}
+                value={portfolioCategoryFilter}
+                onChange={(e) => setPortfolioCategoryFilter(e.target.value)}
+              >
+                <option value="ALL">All Categories</option>
+                <option value="Technical">Technical</option>
+                <option value="Cultural">Cultural</option>
+                <option value="Sports">Sports</option>
+                <option value="Social / Community">Social / Community</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

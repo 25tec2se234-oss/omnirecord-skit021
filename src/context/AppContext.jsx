@@ -45,8 +45,33 @@ const safeStorageSet = (key, value) => {
 };
 
 export const AppProvider = ({ children }) => {
-  // Navigation & routing state
-  const [currentRoute, setCurrentRoute] = useState('landing');
+  // Public portfolio routing state
+  const [publicPortfolioStudentId, setPublicPortfolioStudentId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path.startsWith('/portfolio/')) {
+        return path.replace('/portfolio/', '');
+      }
+    }
+    return 'SKIT-2022-CS014';
+  });
+
+  // Navigation & routing state with URL awareness
+  const [currentRoute, setCurrentRoute] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path.startsWith('/portfolio/')) {
+        return 'public-portfolio';
+      }
+      if (path === '/portfolio-builder') {
+        return 'portfolio-builder';
+      }
+      if (path === '/login') {
+        return 'login';
+      }
+    }
+    return 'landing';
+  });
   const [selectedStudentId, setSelectedStudentId] = useState('STU-001');
   const [selectedRecordId, setSelectedRecordId] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -265,14 +290,56 @@ export const AppProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Navigation Helper
+  // Navigation Helper with History PushState
   const navigateTo = (route, params = {}) => {
     setCurrentRoute(route);
-    if (params.studentId) setSelectedStudentId(params.studentId);
+    if (params.studentId) {
+      setSelectedStudentId(params.studentId);
+      setPublicPortfolioStudentId(params.studentId);
+    }
     if (params.recordId) setSelectedRecordId(params.recordId);
     setIsMobileSidebarOpen(false);
+
+    if (typeof window !== 'undefined') {
+      let targetPath = '/';
+      if (route === 'public-portfolio') {
+        targetPath = `/portfolio/${params.studentId || publicPortfolioStudentId || selectedStudentId}`;
+      } else if (route === 'portfolio-builder') {
+        targetPath = '/portfolio-builder';
+      } else if (route === 'login') {
+        targetPath = '/login';
+      } else if (route === 'landing') {
+        targetPath = '/';
+      }
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Browser PopState Listener for back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return;
+      const path = window.location.pathname;
+      if (path.startsWith('/portfolio/')) {
+        const id = path.replace('/portfolio/', '');
+        setPublicPortfolioStudentId(id);
+        setCurrentRoute('public-portfolio');
+      } else if (path === '/portfolio-builder') {
+        setCurrentRoute('portfolio-builder');
+      } else if (path === '/login') {
+        setCurrentRoute('login');
+      } else if (path === '/') {
+        setCurrentRoute('landing');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Onboarding controls
   const completeOnboarding = () => {
@@ -759,6 +826,8 @@ export const AppProvider = ({ children }) => {
         navigateTo,
         selectedStudentId,
         setSelectedStudentId,
+        publicPortfolioStudentId,
+        setPublicPortfolioStudentId,
         selectedRecordId,
         setSelectedRecordId,
         isSidebarCollapsed,

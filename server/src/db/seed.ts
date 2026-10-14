@@ -394,7 +394,8 @@ export async function seedDatabase() {
     { recordNumber: 'REC-2024-007', studentRegNo: 'SKIT-2023-CS088', actCode: 'ACT-101', deptCode: 'CSE', category: 'Technical', date: new Date('2024-03-03'), level: 'Finalist', status: 'PENDING_REVIEW' as const, certRef: 'CERT-SIH24-192', notes: 'Queued for mentor verification regarding hardware schematic validation.', desc: 'Developed LoRaWAN telemetry prototype for agricultural soil nutrient tracking.' },
     { recordNumber: 'REC-2024-008', studentRegNo: 'SKIT-2024-IT022', actCode: 'ACT-107', deptCode: 'IT', category: 'Workshop', date: new Date('2024-05-14'), level: 'Participant', status: 'NEEDS_CORRECTION' as const, certRef: 'CERT-FLUTTER-31', notes: 'Please upload the official certificate of completion signed by the instructor.', desc: '4-day hands-on workshop building mobile apps with state management.' },
     { recordNumber: 'REC-2024-009', studentRegNo: 'SKIT-2021-EC004', actCode: 'ACT-102', deptCode: 'ECE', category: 'Technical', date: new Date('2024-02-16'), level: 'Participant', status: 'REJECTED' as const, certRef: 'CERT-ROBO-992', notes: 'The uploaded file is an admission audience ticket. It does not certify participation.', desc: 'Attended robotics contest as observer and bench tester.' },
-    { recordNumber: 'REC-2024-010', studentRegNo: 'SKIT-2022-BT008', actCode: 'ACT-108', deptCode: 'BT', category: 'Innovation', date: new Date('2024-06-03'), level: 'Winner', status: 'PENDING_REVIEW' as const, certRef: 'CERT-BIO-012', notes: 'Under review by Institutional Patent & Innovation cell committee.', desc: 'Awarded Best Biotech Innovation for Algal Cellulose Bioplastics.' }
+    { recordNumber: 'REC-2024-010', studentRegNo: 'SKIT-2022-BT008', actCode: 'ACT-108', deptCode: 'BT', category: 'Innovation', date: new Date('2024-06-03'), level: 'Winner', status: 'PENDING_REVIEW' as const, certRef: 'CERT-BIO-012', notes: 'Under review by Institutional Patent & Innovation cell committee.', desc: 'Awarded Best Biotech Innovation for Algal Cellulose Bioplastics.' },
+    { recordNumber: 'REC-2024-011', studentRegNo: 'SKIT-2022-CS014', actCode: 'ACT-103', deptCode: 'CSE', category: 'Research', date: new Date('2024-03-21'), level: 'Recognition', status: 'VERIFIED' as const, certRef: 'CERT-AI-REC01', notes: 'Best Paper Award in Sustainable Computing track confirmed with IEEE chair.', desc: 'Received Best Undergraduate Research Paper Award on Decentralized Edge Intelligence.' }
   ];
 
   for (const r of recordsData) {
@@ -496,6 +497,55 @@ export async function seedDatabase() {
     ],
     skipDuplicates: true
   });
+
+  // 10. Seed Initial Portfolios
+  const aaravProfileId = studentMap.get('SKIT-2022-CS014');
+  if (aaravProfileId) {
+    const aaravPortfolio = await prisma.studentPortfolio.upsert({
+      where: { studentProfileId: aaravProfileId },
+      update: {
+        template: 'CLEAN_MINIMAL',
+        visibility: 'PUBLIC',
+        headline: 'Aspiring AI Engineer & Full-Stack Systems Developer',
+        bio: 'Passionate about competitive programming, AI research, and smart campus IoT systems.'
+      },
+      create: {
+        institutionId: institution.id,
+        studentProfileId: aaravProfileId,
+        template: 'CLEAN_MINIMAL',
+        visibility: 'PUBLIC',
+        headline: 'Aspiring AI Engineer & Full-Stack Systems Developer',
+        bio: 'Passionate about competitive programming, AI research, and smart campus IoT systems.',
+        publishedAt: new Date()
+      }
+    });
+
+    // Link verified records
+    const verifiedAaravRecords = await prisma.participationRecord.findMany({
+      where: {
+        studentProfileId: aaravProfileId,
+        verificationStatus: 'VERIFIED'
+      }
+    });
+
+    for (let i = 0; i < verifiedAaravRecords.length; i++) {
+      const rec = verifiedAaravRecords[i];
+      await prisma.portfolioCredential.upsert({
+        where: {
+          portfolioId_recordId: {
+            portfolioId: aaravPortfolio.id,
+            recordId: rec.id
+          }
+        },
+        update: { displayOrder: i },
+        create: {
+          portfolioId: aaravPortfolio.id,
+          recordId: rec.id,
+          displayOrder: i
+        }
+      });
+    }
+  }
 
   console.log('🎉 Seed completed successfully!');
 }

@@ -207,6 +207,21 @@ export const api = {
   // Subscriptions
   subscriptions: {
     getCurrent: () => request('/subscriptions/current')
+  },
+
+  // Automated Portfolio Builder
+  portfolio: {
+    getMyPortfolio: () => request('/portfolio/me'),
+    updateMySettings: (data) => request('/portfolio/me', { method: 'PUT', body: JSON.stringify(data) }),
+    getEligibleCredentials: () => request('/portfolio/me/credentials'),
+    updateCredentials: (data) => request('/portfolio/me/credentials', { method: 'PUT', body: JSON.stringify(data) }),
+    getPublic: async (studentId) => {
+      try {
+        return await request(`/public/portfolios/${encodeURIComponent(studentId)}`);
+      } catch (err) {
+        return await request(`/portfolio/public/${encodeURIComponent(studentId)}`);
+      }
+    }
   }
 };
 

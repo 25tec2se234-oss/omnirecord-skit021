@@ -18,7 +18,8 @@ import {
   GraduationCap,
   UserCheck,
   PlusCircle,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -46,7 +47,8 @@ export const Sidebar = () => {
     if (activeRole === 'STUDENT') {
       return [
         { id: 'student-dashboard', label: 'Student Overview', icon: LayoutDashboard },
-        { id: 'student-portfolio', label: 'My Portfolio & Credentials', icon: Award },
+        { id: 'portfolio-builder', label: 'Portfolio Builder', icon: Sparkles },
+        { id: 'student-portfolio', label: 'My Credentials', icon: Award },
         { id: 'student-submit', label: 'Submit Achievement', icon: PlusCircle },
         { id: 'activities', label: 'Campus Events', icon: CalendarDays },
         {
