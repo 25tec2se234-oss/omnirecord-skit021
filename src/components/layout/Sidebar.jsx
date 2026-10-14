@@ -84,8 +84,8 @@ export const Sidebar = () => {
             </div>
             {!isSidebarCollapsed && (
               <div className="brand-info">
-                <span className="brand-title">Pehchaan</span>
-                <span className="brand-badge">SKIT021 • SaaS Edu</span>
+                <span className="brand-title">PEHCHAAN</span>
+                <span className="brand-badge">SKIT021 • Team Eco-Novators</span>
               </div>
             )}
           </button>

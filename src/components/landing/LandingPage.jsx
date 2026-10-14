@@ -72,10 +72,10 @@ export const LandingPage = () => {
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                Pehchaan
+                PEHCHAAN
               </div>
               <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--primary-orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                SKIT021 Platform
+                SKIT021 - By Team Eco-Novators
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ export const LandingPage = () => {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0.35rem 0.85rem', background: 'var(--surface-white)', borderRadius: 'var(--radius-full)', border: '1px solid var(--orange-100)', boxShadow: 'var(--shadow-xs)', marginBottom: '1.5rem' }}>
             <Sparkles size={15} style={{ color: 'var(--primary-orange)' }} />
             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary-orange-hover)' }}>
-              National Level EdTech Prototype • SKIT021
+              National Level EdTech Prototype • SKIT021 • By Team - Eco-Novators
             </span>
           </div>
 
@@ -596,8 +596,8 @@ export const LandingPage = () => {
             <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--primary-orange)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GraduationCap size={16} />
             </div>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pehchaan</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>• SKIT021 Hackathon Prototype</span>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>PEHCHAAN</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>• SKIT021 • By Team Eco-Novators</span>
           </div>
 
           <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
