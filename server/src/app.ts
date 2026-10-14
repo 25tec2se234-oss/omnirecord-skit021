@@ -58,7 +58,17 @@ export function createApp(): Express {
   // 4. Rate Limiting for general API
   app.use(env.API_PREFIX, apiLimiter);
 
-  // 5. Health & Readiness Endpoint
+  // 5. Root & Health Endpoints
+  app.get('/', (_req: Request, res: Response) => {
+    res.json({
+      success: true,
+      name: 'Pehchaan (SKIT021) SaaS API',
+      status: 'UP',
+      docs: '/api/v1/docs',
+      health: '/api/v1/health'
+    });
+  });
+
   app.get('/health', async (_req: Request, res: Response) => {
     try {
       // Test DB connection

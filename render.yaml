@@ -40,7 +40,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://pehchaan-backend.onrender.com/api/v1
+        value: https://pehchaan-backend-qkyn.onrender.com/api/v1
     routes:
       - type: rewrite
         source: /*

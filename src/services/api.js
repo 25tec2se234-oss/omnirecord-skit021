@@ -3,7 +3,11 @@
  * Secure, configured client for Node/Express + PostgreSQL backend
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')
+    ? 'https://pehchaan-backend-qkyn.onrender.com/api/v1'
+    : 'http://localhost:5000/api/v1');
 
 class ApiError extends Error {
   constructor(message, status, details = null) {
