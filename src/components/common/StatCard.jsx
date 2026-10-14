@@ -20,8 +20,12 @@ export const StatCard = ({
         <span className="stat-label">{label}</span>
         <span className="stat-value">{value}</span>
         {trend && (
-          <span className={`stat-trend ${trendType}`}>
-            {trend}
+          <span
+            className={`stat-trend ${
+              typeof trend === 'object' ? trend.direction || trendType : trendType
+            }`}
+          >
+            {typeof trend === 'object' ? trend.label || '' : trend}
           </span>
         )}
         {subtitle && !trend && (

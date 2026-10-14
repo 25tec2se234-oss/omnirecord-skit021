@@ -211,8 +211,8 @@ export const OrganiserPortal = () => {
               title="Pending Reviews"
               value={pendingReviewRecords.length}
               icon={Clock}
-              subtitle="Evidence awaiting decision"
-              trend={{ direction: 'neutral', label: 'Action required' }}
+              trend="Action required"
+              trendType="warning"
             />
             <StatCard
               title="Verified Achievements"

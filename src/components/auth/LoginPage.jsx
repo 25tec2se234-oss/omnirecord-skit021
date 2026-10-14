@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../services/api';
-import { Button } from '../common/Button';
 import {
   GraduationCap,
   ShieldCheck,
@@ -14,34 +13,82 @@ import {
   AlertCircle,
   RefreshCw,
   Home,
-  UserCheck,
-  CalendarCheck,
-  Award
+  Building2,
+  Award,
+  Users,
+  Sparkles,
+  ChevronRight,
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 
 export const LoginPage = () => {
   const { login, navigateTo, isBackendConnected, refreshBackendData, addToast } = useApp();
 
-  const [activeTab, setActiveTab] = useState('quick'); // 'quick' | 'credentials' | 'forgot'
+  // Mode: 'signin' | 'demo' | 'forgot'
+  const [authMode, setAuthMode] = useState('signin');
   const [email, setEmail] = useState('studentaffairs@skit.ac.in');
   const [password, setPassword] = useState('DemoPassword2024!');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSyncingDb, setIsSyncingDb] = useState(false);
+
+  // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
-  const handleCredentialsSubmit = async (e) => {
-    e.preventDefault();
+  // Pre-configured persona accounts for SKIT021
+  const DEMO_PERSONAS = [
+    {
+      role: 'INSTITUTION_ADMIN',
+      portal: 'dashboard',
+      title: 'College Admin',
+      subtitle: 'Student Affairs & Dean Office',
+      email: 'studentaffairs@skit.ac.in',
+      password: 'DemoPassword2024!',
+      badge: 'Full Oversight',
+      icon: Building2,
+      color: '#EA580C',
+      bg: '#FFF7ED'
+    },
+    {
+      role: 'FACULTY_COORDINATOR',
+      portal: 'organiser-dashboard',
+      title: 'Event Organiser',
+      subtitle: 'Faculty & Event Reviewer',
+      email: 'coord.cs@skit.ac.in',
+      password: 'DemoPassword2024!',
+      badge: 'Review & Verify',
+      icon: Users,
+      color: '#2563EB',
+      bg: '#EFF6FF'
+    },
+    {
+      role: 'STUDENT',
+      portal: 'student-dashboard',
+      title: 'Student Portal',
+      subtitle: 'Priya Sharma (STU-001 • CS)',
+      email: 'priya.sharma@skit.ac.in',
+      password: 'DemoPassword2024!',
+      badge: 'Submit & Portfolio',
+      icon: Award,
+      color: '#16A34A',
+      bg: '#F0FDF4'
+    }
+  ];
+
+  const handleSignIn = async (e) => {
+    if (e) e.preventDefault();
     setErrorMessage('');
     setIsLoading(true);
 
     try {
-      const data = await login(email, password);
+      const data = await login(email.trim(), password);
       const role = data?.user?.role || data?.membership?.role || 'INSTITUTION_ADMIN';
 
-      // Role-based redirect
+      // Auto-route based on authenticated role
       if (role === 'STUDENT') {
         navigateTo('student-dashboard');
       } else if (role === 'FACULTY_COORDINATOR') {
@@ -51,23 +98,32 @@ export const LoginPage = () => {
       }
     } catch (err) {
       setErrorMessage(
-        err.message || 'Invalid credentials or backend unreachable. Please try again or test database sync.'
+        err.message || 'Authentication failed. Please verify your credentials or check connection.'
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickLogin = async (roleEmail, targetPortal, defaultPass = 'DemoPassword2024!') => {
+  const handleSelectPersona = (persona) => {
+    setEmail(persona.email);
+    setPassword(persona.password);
+    setErrorMessage('');
+    setAuthMode('signin');
+  };
+
+  const handleQuickLaunchPersona = async (persona) => {
+    setEmail(persona.email);
+    setPassword(persona.password);
     setErrorMessage('');
     setIsLoading(true);
 
     try {
-      await login(roleEmail, defaultPass);
-      navigateTo(targetPortal);
+      await login(persona.email, persona.password);
+      navigateTo(persona.portal);
     } catch (err) {
       setErrorMessage(
-        err.message || 'Quick login failed. Click below to initialize database tables if first run.'
+        err.message || 'Quick login failed. Server might be spinning up, please try in a moment.'
       );
     } finally {
       setIsLoading(false);
@@ -80,26 +136,26 @@ export const LoginPage = () => {
     try {
       const res = await api.system.initDb();
       addToast({
-        title: "Database Synchronized",
+        title: "Database Synced",
         message: res.message || "PostgreSQL database migrated and seeded successfully!",
         type: "success"
       });
       await refreshBackendData();
     } catch (err) {
-      setErrorMessage(err.message || "Database sync failed. Server might still be launching.");
+      setErrorMessage(err.message || "Database sync encountered an issue.");
     } finally {
       setIsSyncingDb(false);
     }
   };
 
-  const handleForgotPassword = async (e) => {
+  const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await api.auth.requestPasswordReset(forgotEmail);
       setForgotSuccess(true);
     } catch {
-      // Simulate/standard response for security
+      // Standard response for security
       setForgotSuccess(true);
     } finally {
       setIsLoading(false);
@@ -107,535 +163,460 @@ export const LoginPage = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'radial-gradient(circle at 50% 0%, #FFF7ED 0%, #F8FAFC 85%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem 1.25rem',
-        fontFamily: 'Inter, system-ui, sans-serif'
-      }}
-    >
-      {/* Top Brand Bar */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1.75rem'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--primary-orange)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)'
-            }}
-          >
-            <GraduationCap size={24} />
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-              PEHCHAAN
+    <div className="login-split-container">
+      {/* ============================================================== */}
+      {/* LEFT SHOWCASE PANEL: Brand Identity & Platform Value Showcase */}
+      {/* ============================================================== */}
+      <div className="login-showcase-panel">
+        <div className="showcase-content">
+          {/* Top Brand Tag */}
+          <div className="showcase-brand-header">
+            <div className="showcase-logo-icon">
+              <GraduationCap size={28} />
             </div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary-orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              SKIT021 Central Platform
+            <div>
+              <div className="showcase-brand-title">PEHCHAAN</div>
+              <div className="showcase-brand-badge">SKIT021 • Institutional SaaS</div>
+            </div>
+          </div>
+
+          {/* Hero Statement */}
+          <div className="showcase-hero-text">
+            <div className="showcase-chip">
+              <Sparkles size={14} />
+              <span>National Level EdTech Initiative</span>
+            </div>
+            <h1 className="showcase-headline">
+              Your Journey. <br />
+              Your Proof. <br />
+              <span className="showcase-accent">Our Authenticity.</span>
+            </h1>
+            <p className="showcase-description">
+              A unified, multi-tenant governance platform for verified student achievements,
+              institutional accreditations, and official activity portfolios at SKIT Jaipur.
+            </p>
+          </div>
+
+          {/* Three Feature Highlight Cards */}
+          <div className="showcase-cards-list">
+            <div className="showcase-card">
+              <div className="showcase-card-icon" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#F97316' }}>
+                <ShieldCheck size={20} />
+              </div>
+              <div className="showcase-card-text">
+                <div className="showcase-card-title">Multi-Tier Verification Ledger</div>
+                <div className="showcase-card-desc">
+                  Strict non-self-approval workflow with faculty review and audit-logged decisions.
+                </div>
+              </div>
+            </div>
+
+            <div className="showcase-card">
+              <div className="showcase-card-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
+                <Award size={20} />
+              </div>
+              <div className="showcase-card-text">
+                <div className="showcase-card-title">Tamper-Proof Student Portfolios</div>
+                <div className="showcase-card-desc">
+                  Centralized student participation records, verifiable certificates, and transcripts.
+                </div>
+              </div>
+            </div>
+
+            <div className="showcase-card">
+              <div className="showcase-card-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                <BookOpen size={20} />
+              </div>
+              <div className="showcase-card-text">
+                <div className="showcase-card-title">Accreditation & NAAC Compliance</div>
+                <div className="showcase-card-desc">
+                  Instant institutional reporting, department metrics, and protected CSV exports.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Social Proof & Affiliation */}
+          <div className="showcase-footer">
+            <div className="showcase-stat">
+              <span className="stat-number">100%</span>
+              <span className="stat-label">Isolated Data</span>
+            </div>
+            <div className="showcase-stat-divider" />
+            <div className="showcase-stat">
+              <span className="stat-number">3 Roles</span>
+              <span className="stat-label">Admin • Organiser • Student</span>
+            </div>
+            <div className="showcase-stat-divider" />
+            <div className="showcase-stat">
+              <span className="stat-number">PostgreSQL</span>
+              <span className="stat-label">Real Database</span>
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => navigateTo('landing')}
-          style={{ gap: 6, fontSize: '0.82rem', color: 'var(--text-secondary)' }}
-        >
-          <Home size={15} />
-          Landing Page
-        </button>
       </div>
 
-      {/* Main Login Card */}
-      <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          padding: '2rem',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--border-light)',
-          background: 'var(--surface-white)',
-          borderRadius: 'var(--radius-xl)'
-        }}
-      >
-        {/* Title Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-            Institutional Portal Login
-          </h1>
-          <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: 6, marginBottom: 0 }}>
-            Secure role-based access for Administrators, Organisers, and Students
-          </p>
-        </div>
-
-        {/* Database Status Pill */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.5rem 0.85rem',
-            borderRadius: 'var(--radius-md)',
-            background: isBackendConnected ? 'rgba(34, 197, 94, 0.08)' : 'rgba(234, 179, 8, 0.08)',
-            border: `1px solid ${isBackendConnected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(234, 179, 8, 0.25)'}`,
-            marginBottom: '1.5rem',
-            fontSize: '0.78rem'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: isBackendConnected ? '#22c55e' : '#eab308',
-                boxShadow: isBackendConnected ? '0 0 6px #22c55e' : 'none'
-              }}
-            />
-            <span style={{ fontWeight: 600, color: isBackendConnected ? '#15803d' : '#854d0e' }}>
-              {isBackendConnected ? 'PostgreSQL Database: Online & Live' : 'Backend: Standalone Mode'}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={handleSyncDatabase}
-            disabled={isSyncingDb}
-            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', height: 'auto', gap: 4 }}
-            title="Auto-migrate and seed initial accounts"
-          >
-            <RefreshCw size={11} className={isSyncingDb ? 'spin-animation' : ''} />
-            {isSyncingDb ? 'Syncing...' : 'Sync DB'}
-          </button>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: '1px solid var(--border-light)',
-            marginBottom: '1.5rem'
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => { setActiveTab('quick'); setErrorMessage(''); }}
-            style={{
-              flex: 1,
-              padding: '0.65rem 0.5rem',
-              border: 'none',
-              borderBottom: activeTab === 'quick' ? '2px solid var(--primary-orange)' : '2px solid transparent',
-              background: 'transparent',
-              fontWeight: activeTab === 'quick' ? 700 : 500,
-              color: activeTab === 'quick' ? 'var(--primary-orange)' : 'var(--text-secondary)',
-              fontSize: '0.86rem',
-              cursor: 'pointer',
-              transition: 'all 150ms'
-            }}
-          >
-            Role Login
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('credentials'); setErrorMessage(''); }}
-            style={{
-              flex: 1,
-              padding: '0.65rem 0.5rem',
-              border: 'none',
-              borderBottom: activeTab === 'credentials' ? '2px solid var(--primary-orange)' : '2px solid transparent',
-              background: 'transparent',
-              fontWeight: activeTab === 'credentials' ? 700 : 500,
-              color: activeTab === 'credentials' ? 'var(--primary-orange)' : 'var(--text-secondary)',
-              fontSize: '0.86rem',
-              cursor: 'pointer',
-              transition: 'all 150ms'
-            }}
-          >
-            Credentials Form
-          </button>
-        </div>
-
-        {/* Error Alert with Auto-repair Action */}
-        {errorMessage && (
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              color: 'var(--error)',
-              fontSize: '0.8rem',
-              marginBottom: '1.25rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>{errorMessage}</div>
-            </div>
+      {/* ============================================================== */}
+      {/* RIGHT SIGN-IN PANEL: Sleek Unified Form & Authentication UI    */}
+      {/* ============================================================== */}
+      <div className="login-form-panel">
+        <div className="form-panel-wrapper">
+          {/* Top Utilities: Back link & Live Status */}
+          <div className="form-top-bar">
             <button
               type="button"
-              onClick={handleSyncDatabase}
-              disabled={isSyncingDb}
-              style={{
-                marginTop: 8,
-                fontSize: '0.75rem',
-                color: 'var(--primary-orange)',
-                background: 'none',
-                border: 'none',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-                fontWeight: 600
-              }}
+              className="back-home-btn"
+              onClick={() => navigateTo('landing')}
+              title="Return to public landing page"
             >
-              <RefreshCw size={12} className={isSyncingDb ? 'spin-animation' : ''} />
-              {isSyncingDb ? 'Initializing database...' : 'Click to initialize & seed database accounts'}
+              <Home size={15} />
+              <span>Back to Home</span>
             </button>
-          </div>
-        )}
 
-        {/* Tab 1: Role Login */}
-        {activeTab === 'quick' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 4px' }}>
-              Choose a portal role to log in with verified institutional credentials:
+            {/* Live Database Status */}
+            <div
+              className={`db-pill ${isBackendConnected ? 'online' : 'standalone'}`}
+              title={isBackendConnected ? 'Connected to live PostgreSQL database' : 'Running in local fallback mode'}
+            >
+              <span className="db-dot" />
+              <span>{isBackendConnected ? 'PostgreSQL Live' : 'Backend Standalone'}</span>
+            </div>
+          </div>
+
+          {/* Card Header */}
+          <div className="form-header">
+            <div className="form-institution-tag">
+              <Building2 size={14} style={{ color: 'var(--primary-orange)' }} />
+              <span>Swami Keshvanand Institute of Technology (SKIT021)</span>
+            </div>
+            <h2 className="form-title">
+              {authMode === 'forgot' ? 'Reset Password' : 'Sign in to Pehchaan'}
+            </h2>
+            <p className="form-subtitle">
+              {authMode === 'forgot'
+                ? 'Enter your institutional email address to receive password reset instructions.'
+                : 'Access your dedicated College Admin, Event Organiser, or Student portal.'}
             </p>
-
-            {/* College Admin Portal Card */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('studentaffairs@skit.ac.in', 'dashboard')}
-              disabled={isLoading}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.9rem 1rem',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-light)',
-                background: 'var(--surface-white)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 150ms'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary-orange)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-light)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 'var(--radius-md)',
-                    background: 'var(--soft-orange)',
-                    color: 'var(--primary-orange)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    College Administrative Portal
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                    studentaffairs@skit.ac.in • Full Institutional Oversight
-                  </div>
-                </div>
-              </div>
-              <ArrowRight size={16} style={{ color: 'var(--primary-orange)' }} />
-            </button>
-
-            {/* Event Organiser Portal Card */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('cse.coordinator@skit.ac.in', 'organiser-dashboard')}
-              disabled={isLoading}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.9rem 1rem',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-light)',
-                background: 'var(--surface-white)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 150ms'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary-orange)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-light)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 'var(--radius-md)',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <CalendarCheck size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Event Organiser Portal
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                    cse.coordinator@skit.ac.in • Events, Rosters & Review Queue
-                  </div>
-                </div>
-              </div>
-              <ArrowRight size={16} style={{ color: '#2563eb' }} />
-            </button>
-
-            {/* Student Portal Card */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('aarav.sharma@skit.ac.in', 'student-dashboard')}
-              disabled={isLoading}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.9rem 1rem',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-light)',
-                background: 'var(--surface-white)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 150ms'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary-orange)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-light)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 'var(--radius-md)',
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    color: '#16a34a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Award size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Student Portal
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                    aarav.sharma@skit.ac.in • Portfolio & Submissions
-                  </div>
-                </div>
-              </div>
-              <ArrowRight size={16} style={{ color: '#16a34a' }} />
-            </button>
           </div>
-        )}
 
-        {/* Tab 2: Standard Credentials Form */}
-        {activeTab === 'credentials' && (
-          <form onSubmit={handleCredentialsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
-                Institutional Email or Student ID
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-tertiary)' }} />
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. studentaffairs@skit.ac.in"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="form-control"
-                  style={{ paddingLeft: 38, fontSize: '0.88rem' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('forgot')}
-                  style={{ fontSize: '0.75rem', color: 'var(--primary-orange)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-tertiary)' }} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="Enter institutional password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="form-control"
-                  style={{ paddingLeft: 38, paddingRight: 38, fontSize: '0.88rem' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: 12,
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-tertiary)',
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', marginTop: 5 }}>
-                Default Seed Password: <code>DemoPassword2024!</code>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              disabled={isLoading}
-              style={{ width: '100%', marginTop: 8 }}
-            >
-              {isLoading ? 'Authenticating with PostgreSQL...' : 'Sign In to Portal'}
-            </Button>
-          </form>
-        )}
-
-        {/* Tab 3: Forgot Password View */}
-        {activeTab === 'forgot' && (
-          <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 6px' }}>Reset Your Password</h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 1rem' }}>
-              Enter your registered institutional email to receive a secure recovery token.
-            </p>
-
-            {forgotSuccess ? (
-              <div
-                style={{
-                  padding: '1rem',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  color: '#15803d',
-                  fontSize: '0.82rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: '1rem'
-                }}
+          {/* Mode Selector (Sign In vs Quick Persona Selector) */}
+          {authMode !== 'forgot' && (
+            <div className="auth-mode-selector">
+              <button
+                type="button"
+                className={`mode-btn ${authMode === 'signin' ? 'active' : ''}`}
+                onClick={() => { setAuthMode('signin'); setErrorMessage(''); }}
               >
-                <CheckCircle2 size={18} />
-                <span>If an account exists, a password reset link has been dispatched to your institutional inbox.</span>
+                Standard Sign In
+              </button>
+              <button
+                type="button"
+                className={`mode-btn ${authMode === 'demo' ? 'active' : ''}`}
+                onClick={() => { setAuthMode('demo'); setErrorMessage(''); }}
+              >
+                1-Click Demo Personas
+              </button>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="login-error-alert">
+              <AlertCircle size={16} className="error-icon" />
+              <div className="error-text">
+                <div>{errorMessage}</div>
+                <button
+                  type="button"
+                  className="error-repair-btn"
+                  onClick={handleSyncDatabase}
+                  disabled={isSyncingDb}
+                >
+                  <RefreshCw size={12} className={isSyncingDb ? 'spin-animation' : ''} />
+                  <span>{isSyncingDb ? 'Syncing database...' : 'Initialize & Repair Database'}</span>
+                </button>
               </div>
-            ) : (
-              <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@skit.ac.in"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="form-control"
-                  style={{ fontSize: '0.88rem' }}
-                />
-                <Button type="submit" variant="primary" size="md" disabled={isLoading}>
-                  {isLoading ? 'Sending Request...' : 'Send Password Reset Link'}
-                </Button>
-              </form>
-            )}
+            </div>
+          )}
 
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => { setActiveTab('credentials'); setForgotSuccess(false); }}
-              style={{ width: '100%', marginTop: 10, fontSize: '0.8rem' }}
-            >
-              ← Back to Login
-            </button>
+          {/* ============================================================== */}
+          {/* TAB 1: Standard Enterprise Sign In Form                        */}
+          {/* ============================================================== */}
+          {authMode === 'signin' && (
+            <form onSubmit={handleSignIn} className="auth-form">
+              {/* Email / Institutional Identifier */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="user-email">
+                  Institutional Email or ID
+                </label>
+                <div className="input-with-icon">
+                  <Mail size={18} className="input-icon" />
+                  <input
+                    id="user-email"
+                    type="email"
+                    required
+                    placeholder="e.g. studentaffairs@skit.ac.in"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="username"
+                    className="form-input"
+                  />
+                </div>
+                <div className="quick-domain-hints">
+                  <span className="hint-label">SKIT Domain:</span>
+                  <button
+                    type="button"
+                    className="domain-chip"
+                    onClick={() => {
+                      if (!email.includes('@')) setEmail(email + '@skit.ac.in');
+                    }}
+                  >
+                    + @skit.ac.in
+                  </button>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="form-group">
+                <div className="label-with-link">
+                  <label className="form-label" htmlFor="user-password">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    className="forgot-link"
+                    onClick={() => { setAuthMode('forgot'); setErrorMessage(''); }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="input-with-icon">
+                  <Lock size={18} className="input-icon" />
+                  <input
+                    id="user-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="form-input"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me */}
+              <div className="form-row-remember">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span>Remember this workstation</span>
+                </label>
+              </div>
+
+              {/* Submit CTA */}
+              <button
+                type="submit"
+                className="btn-submit-login"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="btn-loading-content">
+                    <RefreshCw size={17} className="spin-animation" />
+                    <span>Authenticating...</span>
+                  </span>
+                ) : (
+                  <span className="btn-normal-content">
+                    <span>Sign In to Portal</span>
+                    <ArrowRight size={17} />
+                  </span>
+                )}
+              </button>
+
+              {/* Divider */}
+              <div className="form-divider">
+                <span>or continue with institutional identity</span>
+              </div>
+
+              {/* SSO Buttons */}
+              <div className="sso-buttons-grid">
+                <button
+                  type="button"
+                  className="sso-btn"
+                  onClick={() => {
+                    handleQuickLaunchPersona(DEMO_PERSONAS[0]);
+                  }}
+                  title="Simulate SKIT Google Workspace SSO"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  <span>SKIT Google Workspace</span>
+                </button>
+              </div>
+
+              {/* Fast persona loader pill footer */}
+              <div className="persona-quick-strip">
+                <span className="strip-label">Fast Demo Switch:</span>
+                <div className="strip-chips">
+                  {DEMO_PERSONAS.map((p) => (
+                    <button
+                      key={p.role}
+                      type="button"
+                      className="strip-chip"
+                      onClick={() => handleSelectPersona(p)}
+                      title={`Load credentials for ${p.title}`}
+                    >
+                      {p.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 2: 1-Click Demo Personas (For Evaluators & Reviewers)       */}
+          {/* ============================================================== */}
+          {authMode === 'demo' && (
+            <div className="demo-personas-container">
+              <p className="demo-intro">
+                Select a verified institutional role below to instantly load credentials and enter the portal:
+              </p>
+
+              <div className="persona-cards-list">
+                {DEMO_PERSONAS.map((p) => {
+                  const Icon = p.icon;
+                  return (
+                    <div
+                      key={p.role}
+                      className="persona-card"
+                      onClick={() => handleQuickLaunchPersona(p)}
+                    >
+                      <div className="persona-icon-box" style={{ background: p.bg, color: p.color }}>
+                        <Icon size={24} />
+                      </div>
+                      <div className="persona-info">
+                        <div className="persona-title-row">
+                          <span className="persona-title">{p.title}</span>
+                          <span className="persona-badge" style={{ color: p.color, background: p.bg }}>
+                            {p.badge}
+                          </span>
+                        </div>
+                        <div className="persona-subtitle">{p.subtitle}</div>
+                        <div className="persona-email">{p.email}</div>
+                      </div>
+                      <div className="persona-arrow">
+                        <ChevronRight size={18} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="demo-note">
+                <span>💡 Note: Role permissions are validated directly on the PostgreSQL backend.</span>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 3: Forgot Password Recovery Flow                           */}
+          {/* ============================================================== */}
+          {authMode === 'forgot' && (
+            <div className="forgot-password-container">
+              {forgotSuccess ? (
+                <div className="forgot-success-box">
+                  <CheckCircle2 size={36} style={{ color: 'var(--success)', margin: '0 auto 12px' }} />
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px' }}>Recovery Link Sent</h3>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                    If an institutional account exists for <strong>{forgotEmail || email}</strong>, you will receive a secure password reset token shortly.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-submit-login"
+                    style={{ marginTop: 20 }}
+                    onClick={() => { setAuthMode('signin'); setForgotSuccess(false); }}
+                  >
+                    Return to Sign In
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPasswordSubmit} className="auth-form">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="forgot-email">
+                      Institutional Email Address
+                    </label>
+                    <div className="input-with-icon">
+                      <Mail size={18} className="input-icon" />
+                      <input
+                        id="forgot-email"
+                        type="email"
+                        required
+                        placeholder="e.g. yourname@skit.ac.in"
+                        value={forgotEmail || email}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-submit-login"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Sending Token...' : 'Send Password Reset Link'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-ghost-cancel"
+                    onClick={() => setAuthMode('signin')}
+                  >
+                    ← Back to Sign In
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* Institutional Compliance Footer */}
+          <div className="form-footer-compliance">
+            <span>Official Portal for Swami Keshvanand Institute of Technology, Jaipur</span>
+            <div className="footer-links">
+              <span>Security Policy</span>
+              <span>•</span>
+              <span>Privacy</span>
+              <span>•</span>
+              <span>Admin Desk</span>
+            </div>
           </div>
-        )}
-
-        {/* Institutional Footer */}
-        <div
-          style={{
-            marginTop: '1.75rem',
-            paddingTop: '1.25rem',
-            borderTop: '1px solid var(--border-light)',
-            textAlign: 'center',
-            fontSize: '0.75rem',
-            color: 'var(--text-tertiary)'
-          }}
-        >
-          Protected by multi-tenant PostgreSQL schema isolation.
-          <br />
-          Swami Keshvanand Institute of Technology (SKIT-021)
         </div>
       </div>
     </div>

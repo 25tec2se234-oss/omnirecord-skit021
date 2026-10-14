@@ -107,7 +107,7 @@ export const Navbar = ({ onOpenRecordModal }) => {
         {/* Live Backend Database Status Pill */}
         <button
           type="button"
-          onClick={() => setIsAuthModalOpen(true)}
+          onClick={() => navigateTo('login')}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -364,20 +364,7 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 }}
               >
                 <ShieldCheck size={15} style={{ marginRight: 8, color: 'var(--primary-orange)' }} />
-                Dedicated Login Page
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                style={{ width: '100%', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.82rem' }}
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  setIsAuthModalOpen(true);
-                }}
-              >
-                <ShieldCheck size={15} style={{ marginRight: 8, color: 'var(--primary-orange)' }} />
-                Quick Role Switcher
+                Sign In / Switch Portal
               </button>
 
               <button

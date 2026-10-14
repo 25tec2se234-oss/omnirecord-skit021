@@ -104,7 +104,7 @@ export const LandingPage = () => {
             {/* Live Database Status Indicator */}
             <button
               type="button"
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={() => navigateTo('login')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

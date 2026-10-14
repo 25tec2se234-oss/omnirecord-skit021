@@ -82,7 +82,15 @@ export const AppProvider = ({ children }) => {
     institutionCode: 'SKIT-021'
   });
   const [activeRole, setActiveRole] = useState('INSTITUTION_ADMIN');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpenRaw] = useState(false);
+  const setIsAuthModalOpen = (open) => {
+    if (open) {
+      setCurrentRoute('login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setIsAuthModalOpenRaw(false);
+    }
+  };
 
   // Authenticate user with backend API
   const login = async (email, password) => {

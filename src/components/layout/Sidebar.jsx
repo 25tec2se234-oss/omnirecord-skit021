@@ -211,9 +211,9 @@ export const Sidebar = () => {
               type="button"
               className="btn btn-outline btn-sm"
               style={{ width: '100%', fontSize: '0.78rem', marginBottom: 6 }}
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={() => navigateTo('login')}
             >
-              Switch Role / Auth
+              Sign In / Switch Portal
             </button>
 
             <button
