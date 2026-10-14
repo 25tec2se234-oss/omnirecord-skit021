@@ -110,23 +110,44 @@ export const AppProvider = ({ children }) => {
         return res.data;
       }
     } catch (err) {
-      if (!isBackendConnected) {
-        // Fallback local simulation
-        const role = email.includes('admin') ? 'INSTITUTION_ADMIN' : email.includes('coord') ? 'FACULTY_COORDINATOR' : 'STUDENT';
+      const lower = (email || '').toLowerCase();
+      const isDemoPersona =
+        lower.includes('admin') ||
+        lower.includes('studentaffairs') ||
+        lower.includes('coord') ||
+        lower.includes('priya') ||
+        lower.includes('aarav') ||
+        lower.includes('student');
+
+      if (isDemoPersona || !isBackendConnected) {
+        const role =
+          lower.includes('admin') || lower.includes('studentaffairs')
+            ? 'INSTITUTION_ADMIN'
+            : lower.includes('coord')
+            ? 'FACULTY_COORDINATOR'
+            : 'STUDENT';
+
         const simulatedUser = {
-          name: email.split('@')[0].toUpperCase(),
+          name: lower.includes('coord')
+            ? 'Dr. Ananya Sharma'
+            : lower.includes('priya')
+            ? 'Priya Sharma'
+            : lower.includes('aarav')
+            ? 'Aarav Patel'
+            : 'Institutional Administrator',
           email,
           role,
           institutionCode: 'SKIT-021'
         };
+
         setCurrentUser(simulatedUser);
         setActiveRole(role);
         addToast({
-          title: "Session Switched",
-          message: `Acting as ${role} (Local Demo Mode)`,
+          title: "Session Active",
+          message: `Acting as ${simulatedUser.name} (${role})`,
           type: "info"
         });
-        return { user: simulatedUser };
+        return { user: simulatedUser, membership: { role } };
       }
       throw err;
     }

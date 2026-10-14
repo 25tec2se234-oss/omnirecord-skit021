@@ -89,7 +89,7 @@ export async function seedDatabase() {
     }
   });
 
-  // C. Faculty Coordinator
+  // C. Faculty Coordinators (support both cse.coordinator and coord.cs)
   const coordinatorUser = await prisma.user.upsert({
     where: { email: 'cse.coordinator@skit.ac.in' },
     update: {},
@@ -101,7 +101,18 @@ export async function seedDatabase() {
     }
   });
 
-  // D. Student User
+  const coordinatorUserAlt = await prisma.user.upsert({
+    where: { email: 'coord.cs@skit.ac.in' },
+    update: {},
+    create: {
+      email: 'coord.cs@skit.ac.in',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Dr. Ananya Sharma',
+      emailVerified: true
+    }
+  });
+
+  // D. Student Users (support both aarav.patel.22 and priya.sharma)
   const studentUser = await prisma.user.upsert({
     where: { email: 'aarav.patel.22@skit.ac.in' },
     update: {},
@@ -109,6 +120,17 @@ export async function seedDatabase() {
       email: 'aarav.patel.22@skit.ac.in',
       passwordHash: defaultPasswordHash,
       fullName: 'Aarav Patel',
+      emailVerified: true
+    }
+  });
+
+  const studentUserPriya = await prisma.user.upsert({
+    where: { email: 'priya.sharma@skit.ac.in' },
+    update: {},
+    create: {
+      email: 'priya.sharma@skit.ac.in',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Priya Sharma',
       emailVerified: true
     }
   });
@@ -200,6 +222,25 @@ export async function seedDatabase() {
     }
   });
 
+  await prisma.institutionMembership.upsert({
+    where: {
+      institutionId_userId: {
+        institutionId: institution.id,
+        userId: coordinatorUserAlt.id
+      }
+    },
+    update: {
+      role: 'FACULTY_COORDINATOR',
+      departmentId: cseDeptId
+    },
+    create: {
+      institutionId: institution.id,
+      userId: coordinatorUserAlt.id,
+      role: 'FACULTY_COORDINATOR',
+      departmentId: cseDeptId
+    }
+  });
+
   // Link Student User to Membership
   await prisma.institutionMembership.upsert({
     where: {
@@ -212,6 +253,22 @@ export async function seedDatabase() {
     create: {
       institutionId: institution.id,
       userId: studentUser.id,
+      role: 'STUDENT',
+      departmentId: cseDeptId
+    }
+  });
+
+  await prisma.institutionMembership.upsert({
+    where: {
+      institutionId_userId: {
+        institutionId: institution.id,
+        userId: studentUserPriya.id
+      }
+    },
+    update: { role: 'STUDENT', departmentId: cseDeptId },
+    create: {
+      institutionId: institution.id,
+      userId: studentUserPriya.id,
       role: 'STUDENT',
       departmentId: cseDeptId
     }
