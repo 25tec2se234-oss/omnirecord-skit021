@@ -15,7 +15,10 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  UserCheck,
+  PlusCircle,
+  FileText
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -28,36 +31,83 @@ export const Sidebar = () => {
     setIsMobileSidebarOpen,
     records,
     notifications,
-    restartProductTour
+    restartProductTour,
+    activeRole,
+    currentUser,
+    setIsAuthModalOpen
   } = useApp();
 
   // Pending verification count
   const pendingCount = records.filter(r => r.verificationStatus === 'Pending Review').length;
   const unreadNotifCount = notifications.filter(n => !n.read).length;
 
-  const navItems = [
-    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
-    { id: 'students', label: 'Students Directory', icon: Users },
-    { id: 'records', label: 'Participation Records', icon: FileCheck2 },
-    { id: 'activities', label: 'Activities & Events', icon: CalendarDays },
-    {
-      id: 'verification',
-      label: 'Verification Center',
-      icon: ShieldCheck,
-      badge: pendingCount > 0 ? pendingCount : null
-    },
-    { id: 'profile', label: 'Achievement Profiles', icon: Award },
-    { id: 'departments', label: 'Departments', icon: Building2 },
-    { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      icon: Bell,
-      badge: unreadNotifCount > 0 ? unreadNotifCount : null
-    },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'help', label: 'Help & Tour', icon: HelpCircle }
-  ];
+  // Dynamic Navigation Items based on active role
+  const getNavItems = () => {
+    if (activeRole === 'STUDENT') {
+      return [
+        { id: 'student-dashboard', label: 'Student Overview', icon: LayoutDashboard },
+        { id: 'student-portfolio', label: 'My Portfolio & Credentials', icon: Award },
+        { id: 'student-submit', label: 'Submit Achievement', icon: PlusCircle },
+        { id: 'activities', label: 'Campus Events', icon: CalendarDays },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          icon: Bell,
+          badge: unreadNotifCount > 0 ? unreadNotifCount : null
+        },
+        { id: 'settings', label: 'Settings', icon: Settings }
+      ];
+    }
+
+    if (activeRole === 'FACULTY_COORDINATOR') {
+      return [
+        { id: 'organiser-dashboard', label: 'Organiser Overview', icon: LayoutDashboard },
+        { id: 'activities', label: 'My Events & Activities', icon: CalendarDays },
+        {
+          id: 'verification',
+          label: 'Review Queue',
+          icon: ShieldCheck,
+          badge: pendingCount > 0 ? pendingCount : null
+        },
+        { id: 'records', label: 'Participation Records', icon: FileCheck2 },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          icon: Bell,
+          badge: unreadNotifCount > 0 ? unreadNotifCount : null
+        },
+        { id: 'settings', label: 'Settings', icon: Settings }
+      ];
+    }
+
+    // Default: INSTITUTION_ADMIN (College Administrative Portal)
+    return [
+      { id: 'dashboard', label: 'Admin Overview', icon: LayoutDashboard },
+      { id: 'students', label: 'Students Directory', icon: Users },
+      { id: 'staff', label: 'Staff & Organisers', icon: UserCheck },
+      { id: 'departments', label: 'Departments', icon: Building2 },
+      { id: 'activities', label: 'Activities & Events', icon: CalendarDays },
+      { id: 'records', label: 'Participation Records', icon: FileCheck2 },
+      {
+        id: 'verification',
+        label: 'Verification Center',
+        icon: ShieldCheck,
+        badge: pendingCount > 0 ? pendingCount : null
+      },
+      { id: 'profile', label: 'Achievement Profiles', icon: Award },
+      { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
+      {
+        id: 'notifications',
+        label: 'Notifications',
+        icon: Bell,
+        badge: unreadNotifCount > 0 ? unreadNotifCount : null
+      },
+      { id: 'settings', label: 'Settings', icon: Settings },
+      { id: 'help', label: 'Help & Tour', icon: HelpCircle }
+    ];
+  };
+
+  const navItems = getNavItems();
 
   return (
     <>
@@ -145,19 +195,34 @@ export const Sidebar = () => {
           </button>
         </div>
 
-        {/* Sidebar Footer with quick tour restart */}
+        {/* Sidebar Footer with active portal badge and role switch */}
         {!isSidebarCollapsed && (
           <div className="sidebar-footer">
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Need assistance?
+            <div style={{ padding: '0.65rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', marginBottom: 8, border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, letterSpacing: '0.04em' }}>
+                Active Portal
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-orange)', marginTop: 2 }}>
+                {activeRole === 'STUDENT' ? '🎓 Student Portal' : activeRole === 'FACULTY_COORDINATOR' ? '👨‍🏫 Organiser Portal' : '🏛️ College Admin'}
+              </div>
             </div>
+
             <button
               type="button"
               className="btn btn-outline btn-sm"
-              style={{ width: '100%', fontSize: '0.78rem' }}
+              style={{ width: '100%', fontSize: '0.78rem', marginBottom: 6 }}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Switch Role / Auth
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              style={{ width: '100%', fontSize: '0.74rem', color: 'var(--text-tertiary)' }}
               onClick={restartProductTour}
             >
-              Take Product Tour
+              Guided Tour
             </button>
           </div>
         )}

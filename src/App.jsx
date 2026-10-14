@@ -9,6 +9,10 @@ import { AuthModal } from './components/auth/AuthModal';
 
 // Major Application Views
 import { LandingPage } from './components/landing/LandingPage';
+import { LoginPage } from './components/auth/LoginPage';
+import { OrganiserPortal } from './components/portals/OrganiserPortal';
+import { StudentPortal } from './components/portals/StudentPortal';
+import { StaffManagement } from './components/staff/StaffManagement';
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
 import { StudentManagement } from './components/students/StudentManagement';
 import { ParticipationRecords } from './components/records/ParticipationRecords';
@@ -56,6 +60,16 @@ const MainAppLayout = () => {
     );
   }
 
+  // If on dedicated login page, render full-screen authentication experience
+  if (currentRoute === 'login') {
+    return (
+      <>
+        <LoginPage />
+        <ToastContainer />
+      </>
+    );
+  }
+
   const renderRouteContent = () => {
     switch (currentRoute) {
       case 'dashboard':
@@ -64,8 +78,16 @@ const MainAppLayout = () => {
             onOpenRecordModal={() => setIsGlobalRecordModalOpen(true)}
           />
         );
+      case 'organiser-dashboard':
+        return <OrganiserPortal />;
+      case 'student-dashboard':
+      case 'student-portfolio':
+      case 'student-submit':
+        return <StudentPortal />;
       case 'students':
         return <StudentManagement />;
+      case 'staff':
+        return <StaffManagement />;
       case 'records':
         return <ParticipationRecords />;
       case 'activities':

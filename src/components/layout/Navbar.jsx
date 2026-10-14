@@ -14,7 +14,8 @@ import {
   Info,
   ChevronDown,
   Globe,
-  ShieldCheck
+  ShieldCheck,
+  LogOut
 } from 'lucide-react';
 
 export const Navbar = ({ onOpenRecordModal }) => {
@@ -30,7 +31,8 @@ export const Navbar = ({ onOpenRecordModal }) => {
     isBackendConnected,
     setIsAuthModalOpen,
     currentUser,
-    activeRole
+    activeRole,
+    logout
   } = useApp();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -303,14 +305,23 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 border: '1px solid var(--orange-100)'
               }}
             >
-              SK
+              {(currentUser?.name || currentUser?.fullName || 'User')
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
             <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }} className="no-mobile">
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.1 }}>
-                Institutional Admin
+                {activeRole === 'STUDENT'
+                  ? 'Student Portal'
+                  : activeRole === 'FACULTY_COORDINATOR'
+                  ? 'Organiser Portal'
+                  : 'College Admin'}
               </span>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                SKIT Jaipur
+                {currentUser?.name || currentUser?.fullName || institutionInfo.shortName}
               </span>
             </div>
             <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
@@ -322,7 +333,7 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 position: 'absolute',
                 right: 0,
                 top: '115%',
-                width: 230,
+                width: 240,
                 background: 'var(--surface-white)',
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-xl)',
@@ -333,12 +344,28 @@ export const Navbar = ({ onOpenRecordModal }) => {
             >
               <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-light)', marginBottom: 4 }}>
                 <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Administrator Portal
+                  {currentUser?.name || currentUser?.fullName || 'Active Session'}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                  {institutionInfo.adminEmail}
+                  {currentUser?.email || institutionInfo.adminEmail}
+                </div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--primary-orange)', marginTop: 4, textTransform: 'uppercase' }}>
+                  Role: {activeRole}
                 </div>
               </div>
+
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ width: '100%', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.82rem' }}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  navigateTo('login');
+                }}
+              >
+                <ShieldCheck size={15} style={{ marginRight: 8, color: 'var(--primary-orange)' }} />
+                Dedicated Login Page
+              </button>
 
               <button
                 type="button"
@@ -350,7 +377,7 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 }}
               >
                 <ShieldCheck size={15} style={{ marginRight: 8, color: 'var(--primary-orange)' }} />
-                Live Auth & Switch Role
+                Quick Role Switcher
               </button>
 
               <button
@@ -400,11 +427,12 @@ export const Navbar = ({ onOpenRecordModal }) => {
                 style={{ width: '100%', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.82rem', color: 'var(--error)' }}
                 onClick={() => {
                   setIsUserMenuOpen(false);
-                  resetDemoData();
+                  logout();
+                  navigateTo('login');
                 }}
               >
-                <RotateCcw size={15} style={{ marginRight: 8 }} />
-                Reset Demo Data
+                <LogOut size={15} style={{ marginRight: 8 }} />
+                Sign Out
               </button>
             </div>
           )}

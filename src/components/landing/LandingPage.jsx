@@ -135,7 +135,7 @@ export const LandingPage = () => {
             <button
               type="button"
               className="btn btn-outline btn-sm no-mobile"
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={() => navigateTo('login')}
             >
               Sign In
             </button>
