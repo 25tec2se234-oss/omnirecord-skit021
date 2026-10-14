@@ -1,5 +1,5 @@
 services:
-  # 1. Backend Web Service (Node.js + Express + TypeScript + Prisma) - FREE TIER
+  # 1. Backend Web Service (Node.js + Express + TypeScript + Prisma)
   - type: web
     name: pehchaan-backend
     runtime: node
@@ -18,7 +18,7 @@ services:
       - key: CORS_ORIGIN
         value: https://pehchaan-skit021.onrender.com
       - key: DATABASE_URL
-        sync: false # Provide your free Neon.tech or Supabase connection string
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: JWT_SECRET
@@ -32,11 +32,10 @@ services:
       - key: STORAGE_LOCAL_DIR
         value: ./uploads/evidence
 
-  # 2. Frontend Static Site (React 19 + Vite) - FREE TIER
+  # 2. Frontend Static Site (React 19 + Vite)
   - type: web
     name: skit021-student-platform
     env: static
-    plan: free
     buildCommand: npm run build
     staticPublishPath: ./dist
     envVars:
