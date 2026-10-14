@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Info,
   ChevronDown,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
 
 export const Navbar = ({ onOpenRecordModal }) => {
@@ -25,7 +26,11 @@ export const Navbar = ({ onOpenRecordModal }) => {
     markAllNotificationsAsRead,
     restartProductTour,
     resetDemoData,
-    institutionInfo
+    institutionInfo,
+    isBackendConnected,
+    setIsAuthModalOpen,
+    currentUser,
+    activeRole
   } = useApp();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -97,6 +102,40 @@ export const Navbar = ({ onOpenRecordModal }) => {
       </div>
 
       <div className="header-right">
+        {/* Live Backend Database Status Pill */}
+        <button
+          type="button"
+          onClick={() => setIsAuthModalOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            padding: '0.35rem 0.75rem',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.76rem',
+            fontWeight: 600,
+            background: isBackendConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+            color: isBackendConnected ? '#15803d' : '#854d0e',
+            border: `1px solid ${isBackendConnected ? 'rgba(34, 197, 94, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
+            cursor: 'pointer',
+            transition: 'all 150ms'
+          }}
+          title="Click to check backend health or sign in"
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: isBackendConnected ? '#22c55e' : '#eab308',
+              boxShadow: isBackendConnected ? '0 0 6px #22c55e' : 'none'
+            }}
+          />
+          <span className="no-mobile">
+            {isBackendConnected ? 'PostgreSQL Live' : 'Backend Standalone'}
+          </span>
+        </button>
+
         {/* Quick Add Record action */}
         {onOpenRecordModal && (
           <Button
@@ -300,6 +339,19 @@ export const Navbar = ({ onOpenRecordModal }) => {
                   {institutionInfo.adminEmail}
                 </div>
               </div>
+
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ width: '100%', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.82rem' }}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setIsAuthModalOpen(true);
+                }}
+              >
+                <ShieldCheck size={15} style={{ marginRight: 8, color: 'var(--primary-orange)' }} />
+                Live Auth & Switch Role
+              </button>
 
               <button
                 type="button"

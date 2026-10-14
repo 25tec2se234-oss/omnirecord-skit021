@@ -82,6 +82,63 @@ export const AppProvider = ({ children }) => {
     institutionCode: 'SKIT-021'
   });
   const [activeRole, setActiveRole] = useState('INSTITUTION_ADMIN');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Authenticate user with backend API
+  const login = async (email, password) => {
+    try {
+      const res = await api.auth.login({ email, password });
+      if (res?.data?.user) {
+        setCurrentUser(res.data.user);
+        const userRole = res.data.membership?.role || res.data.user.role || 'INSTITUTION_ADMIN';
+        setActiveRole(userRole);
+        setIsBackendConnected(true);
+        addToast({
+          title: "Authenticated Successfully",
+          message: `Logged in as ${res.data.user.fullName || res.data.user.email} (${userRole}) via live PostgreSQL.`,
+          type: "success"
+        });
+        await refreshBackendData();
+        return res.data;
+      }
+    } catch (err) {
+      if (!isBackendConnected) {
+        // Fallback local simulation
+        const role = email.includes('admin') ? 'INSTITUTION_ADMIN' : email.includes('coord') ? 'FACULTY_COORDINATOR' : 'STUDENT';
+        const simulatedUser = {
+          name: email.split('@')[0].toUpperCase(),
+          email,
+          role,
+          institutionCode: 'SKIT-021'
+        };
+        setCurrentUser(simulatedUser);
+        setActiveRole(role);
+        addToast({
+          title: "Session Switched",
+          message: `Acting as ${role} (Local Demo Mode)`,
+          type: "info"
+        });
+        return { user: simulatedUser };
+      }
+      throw err;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      if (isBackendConnected) {
+        await api.auth.logout();
+      }
+    } catch {
+      // ignore
+    }
+    setCurrentUser(null);
+    addToast({
+      title: "Signed Out",
+      message: "You have signed out of the institutional session.",
+      type: "info"
+    });
+  };
 
   // Load live data from backend API
   const refreshBackendData = async () => {
@@ -673,6 +730,10 @@ export const AppProvider = ({ children }) => {
         activeRole,
         setActiveRole,
         refreshBackendData,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        login,
+        logout,
 
         // Onboarding
         hasCompletedOnboarding,

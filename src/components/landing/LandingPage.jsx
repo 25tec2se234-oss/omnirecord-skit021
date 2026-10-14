@@ -19,7 +19,15 @@ import {
 } from 'lucide-react';
 
 export const LandingPage = () => {
-  const { navigateTo, restartProductTour, records, students, activities } = useApp();
+  const {
+    navigateTo,
+    restartProductTour,
+    records,
+    students,
+    activities,
+    isBackendConnected,
+    setIsAuthModalOpen
+  } = useApp();
 
   const pendingCount = records.filter(r => r.verificationStatus === 'Pending Review').length;
 
@@ -92,7 +100,46 @@ export const LandingPage = () => {
           </nav>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {/* Live Database Status Indicator */}
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0.3rem 0.65rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.76rem',
+                fontWeight: 600,
+                background: isBackendConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                color: isBackendConnected ? '#15803d' : '#854d0e',
+                border: `1px solid ${isBackendConnected ? 'rgba(34, 197, 94, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`,
+                cursor: 'pointer'
+              }}
+              title="Click to check backend health or sign in"
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: isBackendConnected ? '#22c55e' : '#eab308',
+                  boxShadow: isBackendConnected ? '0 0 6px #22c55e' : 'none'
+                }}
+              />
+              <span className="no-mobile">{isBackendConnected ? 'PostgreSQL Live' : 'Backend Standalone'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-sm no-mobile"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Sign In
+            </button>
+
             <button
               type="button"
               className="btn btn-ghost btn-sm"
@@ -101,6 +148,7 @@ export const LandingPage = () => {
               <HelpCircle size={15} style={{ marginRight: 4 }} />
               Guided Tour
             </button>
+
             <Button
               variant="primary"
               size="sm"

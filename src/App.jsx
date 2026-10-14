@@ -5,6 +5,7 @@ import { Navbar } from './components/layout/Navbar';
 import { ToastContainer } from './components/common/ToastContainer';
 import { ProductOnboardingModal } from './components/onboarding/ProductOnboardingModal';
 import { RecordFormModal } from './components/records/RecordFormModal';
+import { AuthModal } from './components/auth/AuthModal';
 
 // Major Application Views
 import { LandingPage } from './components/landing/LandingPage';
@@ -26,7 +27,9 @@ const MainAppLayout = () => {
     isSidebarCollapsed,
     hasCompletedOnboarding,
     setIsOnboardingOpen,
-    institutionInfo
+    institutionInfo,
+    isAuthModalOpen,
+    setIsAuthModalOpen
   } = useApp();
 
   const [isGlobalRecordModalOpen, setIsGlobalRecordModalOpen] = useState(false);
@@ -44,6 +47,10 @@ const MainAppLayout = () => {
       <>
         <LandingPage />
         <ProductOnboardingModal />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+        />
         <ToastContainer />
       </>
     );
@@ -121,6 +128,10 @@ const MainAppLayout = () => {
       />
 
       <ProductOnboardingModal />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
       <ToastContainer />
     </div>
   );
