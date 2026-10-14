@@ -1,10 +1,15 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './db/client.js';
+import { seedDatabase } from './db/seed.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const app = createApp();
 
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, async () => {
   console.log(`====================================================`);
   console.log(`🚀 Pehchaan (SKIT021) Backend Server Running`);
   console.log(`📡 Environment:  ${env.NODE_ENV}`);
@@ -12,6 +17,22 @@ const server = app.listen(env.PORT, () => {
   console.log(`📖 Swagger Docs: http://localhost:${env.PORT}${env.API_PREFIX}/docs`);
   console.log(`💚 Health Check: http://localhost:${env.PORT}${env.API_PREFIX}/health`);
   console.log(`====================================================`);
+
+  // Ensure database tables exist and seed default accounts
+  try {
+    console.log('🔄 Checking database tables and migrations...');
+    await execAsync('npx prisma migrate deploy', { cwd: process.cwd() });
+    console.log('🌱 Ensuring default seed records exist...');
+    await seedDatabase();
+    console.log('✅ Database initialization & seed confirmed.');
+  } catch (err: any) {
+    console.warn('⚠️ Startup migration note (normal if already migrated):', err?.message || err);
+    try {
+      await seedDatabase();
+    } catch (seedErr: any) {
+      console.warn('⚠️ Startup seed note:', seedErr?.message || seedErr);
+    }
+  }
 });
 
 // Graceful Shutdown Handler

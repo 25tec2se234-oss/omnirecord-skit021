@@ -110,6 +110,39 @@ export function createApp(): Express {
     }
   });
 
+  // Database Setup & Sync Endpoint
+  const initDbHandler = async (_req: Request, res: Response) => {
+    try {
+      const { seedDatabase } = await import('./db/seed.js');
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      let migrationResult = 'skipped';
+      try {
+        const { stdout } = await execAsync('npx prisma migrate deploy', { cwd: process.cwd() });
+        migrationResult = stdout.trim();
+      } catch (mErr: any) {
+        migrationResult = mErr.message;
+      }
+
+      await seedDatabase();
+      res.json({
+        success: true,
+        message: 'PostgreSQL database verified and seeded successfully!',
+        migration: migrationResult
+      });
+    } catch (e: any) {
+      res.status(500).json({
+        success: false,
+        error: e.message
+      });
+    }
+  };
+
+  app.all('/init-db', initDbHandler);
+  app.all(`${env.API_PREFIX}/system/init-db`, initDbHandler);
+
   // 6. OpenAPI Documentation
   app.use(`${env.API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

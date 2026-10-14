@@ -25,6 +25,16 @@ async function request(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
+  // Attach stored JWT token from localStorage if available
+  try {
+    const savedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('skit021_auth_token') : null;
+    if (savedToken && !headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${savedToken}`;
+    }
+  } catch (e) {
+    // ignore storage access restrictions
+  }
+
   // If body is FormData, delete Content-Type so browser sets boundary
   if (options.body instanceof FormData) {
     delete headers['Content-Type'];
@@ -33,7 +43,7 @@ async function request(endpoint, options = {}) {
   const config = {
     ...options,
     headers,
-    credentials: 'include' // Sends HttpOnly session cookies
+    credentials: 'include' // Sends HttpOnly session cookies where supported
   };
 
   try {
@@ -81,13 +91,38 @@ export const api = {
 
   // Authentication
   auth: {
-    login: (credentials) => request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+    login: async (credentials) => {
+      const res = await request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
+      if (res?.data?.token) {
+        try {
+          localStorage.setItem('skit021_auth_token', res.data.token);
+        } catch {
+          // ignore
+        }
+      }
+      return res;
+    },
     register: (userData) => request('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
-    logout: () => request('/auth/logout', { method: 'POST' }),
+    logout: async () => {
+      try {
+        await request('/auth/logout', { method: 'POST' });
+      } finally {
+        try {
+          localStorage.removeItem('skit021_auth_token');
+        } catch {
+          // ignore
+        }
+      }
+    },
     me: () => request('/auth/me'),
     requestPasswordReset: (email) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
     resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: JSON.stringify(payload) }),
     changePassword: (payload) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  // System Setup & Database Initialization
+  system: {
+    initDb: () => request('/system/init-db', { method: 'POST' })
   },
 
   // Institution

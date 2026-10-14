@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { api } from '../../services/api';
 import { Button } from '../common/Button';
 import {
   ShieldCheck,
@@ -29,6 +30,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('studentaffairs@skit.ac.in');
   const [password, setPassword] = useState('DemoPassword2024!');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncingDb, setIsSyncingDb] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
   const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState('quick'); // 'quick' | 'custom'
 
@@ -37,12 +40,13 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const handleCustomLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setSyncMessage('');
     setIsSubmitting(true);
     try {
       await login(email, password);
       onClose();
     } catch (err) {
-      setAuthError(err.message || 'Login failed. Please verify credentials.');
+      setAuthError(err.message || 'Login failed. Please verify credentials or sync database.');
     } finally {
       setIsSubmitting(false);
     }
@@ -50,14 +54,30 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
   const handleQuickLogin = async (roleEmail, defaultPass = 'DemoPassword2024!') => {
     setAuthError('');
+    setSyncMessage('');
     setIsSubmitting(true);
     try {
       await login(roleEmail, defaultPass);
       onClose();
     } catch (err) {
-      setAuthError(err.message || 'Quick login failed.');
+      setAuthError(err.message || 'Quick login failed. Database may need migration or seed.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSyncDatabase = async () => {
+    setIsSyncingDb(true);
+    setSyncMessage('');
+    try {
+      const res = await api.system.initDb();
+      setSyncMessage(res.message || 'PostgreSQL database verified and seeded successfully!');
+      setAuthError('');
+      await refreshBackendData();
+    } catch (err) {
+      setAuthError(err.message || 'Database sync failed. Server might still be deploying.');
+    } finally {
+      setIsSyncingDb(false);
     }
   };
 
@@ -183,50 +203,60 @@ export const AuthModal = ({ isOpen, onClose }) => {
             style={{
               padding: '0.85rem 1rem',
               borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-subtle)',
+              background: currentUser ? 'var(--bg-secondary)' : '#F9FAFB',
+              border: `1px solid ${currentUser ? 'var(--border-subtle)' : 'var(--border-light)'}`,
               marginBottom: '1.25rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'var(--primary-orange)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.8rem'
-                }}
-              >
-                {currentUser?.name ? currentUser.name.charAt(0) : 'U'}
-              </div>
-              <div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {currentUser?.name || 'Institutional Administrator'}
+            {currentUser ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: '50%',
+                      background: 'var(--primary-orange)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {currentUser.fullName ? currentUser.fullName.charAt(0) : (currentUser.name ? currentUser.name.charAt(0) : 'U')}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {currentUser.fullName || currentUser.name || 'Institutional User'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                      {currentUser.email} • <span style={{ fontWeight: 600, color: 'var(--primary-orange)' }}>{activeRole}</span>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  {currentUser?.email || 'studentaffairs@skit.ac.in'} • <span style={{ fontWeight: 600, color: 'var(--primary-orange)' }}>{activeRole}</span>
-                </div>
-              </div>
-            </div>
 
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ color: 'var(--error)', fontSize: '0.75rem', gap: 4 }}
-              onClick={logout}
-            >
-              <LogOut size={13} />
-              Logout
-            </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--error)', fontSize: '0.75rem', gap: 4 }}
+                  onClick={logout}
+                >
+                  <LogOut size={13} />
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  🔒 <strong>Not Logged In:</strong> Browse as Guest or authenticate below
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tab Navigation */}
@@ -273,13 +303,13 @@ export const AuthModal = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {authError && (
+          {syncMessage && (
             <div
               style={{
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(239, 68, 68, 0.1)',
-                color: 'var(--error)',
+                background: 'rgba(34, 197, 94, 0.1)',
+                color: '#15803d',
                 fontSize: '0.78rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -287,8 +317,49 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 marginBottom: '1rem'
               }}
             >
-              <AlertCircle size={15} />
-              {authError}
+              <CheckCircle2 size={16} />
+              <span>{syncMessage}</span>
+            </div>
+          )}
+
+          {authError && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div
+                style={{
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: 'var(--error)',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+              >
+                <AlertCircle size={16} />
+                <span>{authError}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSyncDatabase}
+                disabled={isSyncingDb}
+                style={{
+                  marginTop: 6,
+                  fontSize: '0.76rem',
+                  color: 'var(--primary-orange)',
+                  background: 'none',
+                  border: 'none',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}
+              >
+                <RefreshCw size={13} className={isSyncingDb ? 'spin-animation' : ''} />
+                {isSyncingDb ? 'Migrating & Seeding Database...' : 'Click here to initialize database tables & demo accounts'}
+              </button>
             </div>
           )}
 

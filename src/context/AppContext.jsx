@@ -126,13 +126,12 @@ export const AppProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      if (isBackendConnected) {
-        await api.auth.logout();
-      }
+      await api.auth.logout();
     } catch {
       // ignore
     }
     setCurrentUser(null);
+    setActiveRole('GUEST');
     addToast({
       title: "Signed Out",
       message: "You have signed out of the institutional session.",
@@ -182,6 +181,21 @@ export const AppProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const verifySession = async () => {
+      try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('skit021_auth_token') : null;
+        if (token) {
+          const res = await api.auth.me();
+          if (res?.data?.user) {
+            setCurrentUser(res.data.user);
+            setActiveRole(res.data.user.role || 'INSTITUTION_ADMIN');
+          }
+        }
+      } catch {
+        try { localStorage.removeItem('skit021_auth_token'); } catch {}
+      }
+    };
+    verifySession();
     refreshBackendData();
   }, []);
 

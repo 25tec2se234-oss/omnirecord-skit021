@@ -443,7 +443,7 @@ export async function seedDatabase() {
   console.log('🎉 Seed completed successfully!');
 }
 
-if (process.argv[1]?.endsWith('seed.ts')) {
+if (process.argv[1]?.includes('seed')) {
   seedDatabase()
     .catch((e) => {
       console.error('❌ Seed error:', e);
