@@ -22,8 +22,30 @@ export const ProductOnboardingModal = () => {
   useEffect(() => {
     if (isOnboardingOpen) {
       setCurrentStep(0);
+      document.body.style.overflow = 'hidden';
     }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOnboardingOpen]);
+
+  useEffect(() => {
+    if (!isOnboardingOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        completeOnboarding();
+        navigateTo('dashboard');
+      } else if (e.key === 'ArrowRight') {
+        setCurrentStep((prev) => (prev < 5 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOnboardingOpen, completeOnboarding, navigateTo]);
 
   if (!isOnboardingOpen) return null;
 
@@ -63,7 +85,7 @@ export const ProductOnboardingModal = () => {
         "Referential Integrity: Updating a student or event automatically syncs all records"
       ],
       illustration: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', padding: '1rem', background: '#F8FAFC', borderRadius: 14, border: '1px solid #E2E8F0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', padding: '1rem', background: '#F8FAFC', borderRadius: 14, border: '1px solid #E2E8F0' }}>
           <div style={{ background: '#fff', padding: '0.85rem', borderRadius: 10, textAlign: 'center', border: '1px solid #E5E7EB', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
             <div style={{ color: '#F97316', fontWeight: 700, fontSize: '0.82rem' }}>1. Students</div>
             <div style={{ fontSize: '0.75rem', color: '#71717A', marginTop: 4 }}>12+ Verified Profiles</div>
@@ -107,7 +129,7 @@ export const ProductOnboardingModal = () => {
       id: "verification",
       badge: "Review Workflow",
       title: "Build Trust Through Structured Verification",
-      description: "Prevent fraudulent or duplicated claims with an institutional review queue designed for department heads and faculty coordinators.",
+      description: "Prevent unverified or duplicated claims with an institutional review queue designed for department heads and faculty coordinators.",
       icon: ShieldCheck,
       accentColor: "#16A34A",
       details: [
@@ -137,7 +159,7 @@ export const ProductOnboardingModal = () => {
       id: "insights",
       badge: "Analytics & Accreditation",
       title: "Turn Participation into Meaningful Insights",
-      description: "Generate instant visual metrics and accreditation-ready reports for NAAC, NBA, and NIRF institutional evaluations.",
+      description: "Generate structured visual metrics and compliance-ready reports for institutional evaluations and academic audits.",
       icon: BarChart3,
       accentColor: "#9333EA",
       details: [
@@ -217,6 +239,7 @@ export const ProductOnboardingModal = () => {
           boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)'
         }}
         onClick={(e) => e.stopPropagation()}
+        aria-labelledby="onboarding-step-heading"
       >
         {/* Header with step pill & close */}
         <div className="modal-header" style={{ padding: '1rem 1.5rem', background: 'var(--bg-secondary)' }}>
@@ -258,7 +281,7 @@ export const ProductOnboardingModal = () => {
             {current.illustration}
           </div>
 
-          <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+          <h3 id="onboarding-step-heading" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             {current.title}
           </h3>
           <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '1.25rem' }}>

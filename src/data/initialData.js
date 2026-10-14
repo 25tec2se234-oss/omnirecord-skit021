@@ -798,7 +798,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: "NOTIF-05",
     title: "Institutional Report Ready",
-    message: "Q1 2024 NAAC / NBA Accreditation Participation summary is available for preview and CSV export.",
+    message: "Q1 2024 Accreditation & Student Progression summary is available for preview and CSV export.",
     type: "info",
     timestamp: "2 days ago",
     read: true,
@@ -810,7 +810,7 @@ export const INITIAL_NOTIFICATIONS = [
 export const INSTITUTION_INFO = {
   name: "Swami Keshvanand Institute of Technology, Management & Gramothan",
   shortName: "SKIT Jaipur",
-  accreditation: "NAAC Grade 'A++' Accredited | NBA Accredited",
+  accreditation: "Autonomous Engineering & Technology Framework (Demo Benchmark)",
   portalId: "SKIT021-EDU-CLOUD",
   adminName: "Dean of Student Affairs",
   adminEmail: "studentaffairs@skit.ac.in",

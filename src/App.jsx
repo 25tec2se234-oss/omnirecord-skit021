@@ -106,7 +106,7 @@ const MainAppLayout = () => {
         {/* Institutional Minimal Footer */}
         <footer style={{ marginTop: 'auto', borderTop: '1px solid var(--border-light)', background: 'var(--surface-white)', padding: '1rem 1.75rem', fontSize: '0.8rem', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <strong>{institutionInfo.shortName}</strong> • {institutionInfo.portalId} • NAAC 'A++' Accredited
+            <strong>{institutionInfo.shortName}</strong> • {institutionInfo.portalId} • Institutional Governance Simulation
           </div>
           <div>
             Frontend Prototype • SKIT021 Centralized Student Participation Platform

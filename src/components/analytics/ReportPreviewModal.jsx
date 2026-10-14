@@ -26,7 +26,7 @@ export const ReportPreviewModal = ({ isOpen, onClose, filteredRecords, filterSum
       isOpen={isOpen}
       onClose={onClose}
       title="Institutional Accreditation Report Preview"
-      subtitle="NAAC Criteria 5 & NBA Student Participation Audit Format"
+      subtitle="Institutional Student Participation & Progression Audit Format"
       size="xl"
       footer={
         <>
@@ -72,7 +72,7 @@ export const ReportPreviewModal = ({ isOpen, onClose, filteredRecords, filterSum
         </div>
 
         {/* Executive Summary Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', textAlign: 'center' }}>
           <div style={{ padding: '0.85rem', background: 'var(--surface-white)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Total Filtered Entries</div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: 2 }}>{filteredRecords.length}</div>

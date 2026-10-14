@@ -318,7 +318,7 @@ export const LandingPage = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 10, fontSize: '0.88rem', color: '#7F1D1D' }}>
                   <span style={{ color: '#DC2626', fontWeight: 700 }}>✕</span>
-                  <span><strong>Repeated Manual Work:</strong> Faculty waste hundreds of administrative hours re-collecting proofs for every NAAC/NBA inspection.</span>
+                  <span><strong>Repeated Manual Work:</strong> Faculty spend substantial administrative time compiling disparate proofs for periodic institutional reviews.</span>
                 </div>
                 <div style={{ display: 'flex', gap: 10, fontSize: '0.88rem', color: '#7F1D1D' }}>
                   <span style={{ color: '#DC2626', fontWeight: 700 }}>✕</span>
@@ -403,7 +403,7 @@ export const LandingPage = () => {
               {
                 icon: FileText,
                 title: "6. Institutional Accreditation Reporting",
-                desc: "Filterable reports designed to satisfy NAAC Criteria 5 (Student Support & Progression) and NBA accreditation audits."
+                desc: "Structured exports designed to assist institutional reporting standards, student progression metrics, and review audits."
               },
               {
                 icon: Award,
@@ -524,15 +524,15 @@ export const LandingPage = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', textAlign: 'left' }}>
             <div style={{ background: 'var(--surface-white)', padding: '1.5rem', borderRadius: 12, border: '1px solid var(--border-light)' }}>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>70% Reduction in Audit Time</strong>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>Streamlined Audit Preparation</strong>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>
-                Prepare NAAC Criteria 5 and NIRF documentation in minutes with standardized CSV and PDF data exports instead of manual departmental sweeps.
+                Organize accreditation documentation and student progression records with standardized CSV and PDF data exports rather than manual departmental sweeps.
               </p>
             </div>
             <div style={{ background: 'var(--surface-white)', padding: '1.5rem', borderRadius: 12, border: '1px solid var(--border-light)' }}>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>Fraud-Proof Student Credentials</strong>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>Coordinator-Verified Student Credentials</strong>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>
-                Institutional verification ensures companies and foreign universities receive genuine, coordinator-reviewed student records.
+                Institutional review queues ensure that transcripts and merit certificates reflect faculty-reviewed records.
               </p>
             </div>
             <div style={{ background: 'var(--surface-white)', padding: '1.5rem', borderRadius: 12, border: '1px solid var(--border-light)' }}>

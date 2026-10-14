@@ -187,7 +187,7 @@ export const DashboardOverview = ({ onOpenRecordModal, onOpenReviewModal }) => {
       )}
 
       {/* Charts Grid: Row 1 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem' }}>
         {/* Monthly Trend Chart */}
         <div className="card">
           <div className="card-header">
@@ -224,7 +224,7 @@ export const DashboardOverview = ({ onOpenRecordModal, onOpenReviewModal }) => {
       </div>
 
       {/* Charts Grid: Row 2 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem' }}>
         {/* Category Breakdown */}
         <div className="card">
           <div className="card-header">

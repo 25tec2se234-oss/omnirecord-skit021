@@ -1116,6 +1116,12 @@ p {
   box-shadow: 0 0 0 2px var(--error-border);
 }
 
+.timeline-marker.warning,
+.timeline-marker.correction {
+  background-color: #F59E0B;
+  box-shadow: 0 0 0 2px var(--warning-border);
+}
+
 .timeline-content {
   background: var(--surface-white);
   border: 1px solid var(--border-light);
@@ -1160,6 +1166,45 @@ p {
 @media (max-width: 640px) {
   .no-mobile {
     display: none !important;
+  }
+
+  .app-content {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .page-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .page-actions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .table-toolbar {
+    padding: 0.75rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .table-filters {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  .stat-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .modal-dialog {
+    width: 95vw !important;
+    margin: 0.5rem !important;
+    max-height: 92vh !important;
   }
 }
 

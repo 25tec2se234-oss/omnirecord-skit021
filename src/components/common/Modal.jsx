@@ -30,10 +30,13 @@ export const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="modal-overlay" onClick={onClose}>
       <div
         className={`modal-dialog ${size} ${className}`.trim()}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeof title === 'string' ? title : 'Modal Dialog'}
       >
         <div className="modal-header">
           <div>

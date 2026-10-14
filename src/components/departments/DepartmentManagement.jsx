@@ -98,7 +98,7 @@ export const DepartmentManagement = () => {
           onAction={() => setSearchTerm('')}
         />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '1.25rem' }}>
           {filteredDepartments.map((dept) => {
             const deptStudents = students.filter(s => s.departmentId === dept.id);
             const deptActivities = activities.filter(a => a.departmentId === dept.id);

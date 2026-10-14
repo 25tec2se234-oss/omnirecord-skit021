@@ -158,7 +158,7 @@ export const AnalyticsReports = () => {
             Analytics & Institutional Reporting
           </h1>
           <p>
-            Dynamic metrics, department breakdowns, and export tools tailored for NAAC, NBA, and institutional audits.
+            Dynamic metrics, department breakdowns, and export tools tailored for internal compliance and institutional reviews.
           </p>
         </div>
 
@@ -307,7 +307,7 @@ export const AnalyticsReports = () => {
       </div>
 
       {/* Charts Grid Driven by Filtered Records */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
         <div className="card">
           <div className="card-header">
             <div>
@@ -333,7 +333,7 @@ export const AnalyticsReports = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
         <div className="card">
           <div className="card-header">
             <div>
@@ -356,7 +356,7 @@ export const AnalyticsReports = () => {
       </div>
 
       {/* Leaderboards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem' }}>
         {/* Most Active Events */}
         <div className="card">
           <div className="card-header">

@@ -43,7 +43,7 @@ export const HelpCenter = () => {
       route: "verification"
     },
     {
-      title: "4. How to Generate Accreditation Reports (NAAC / NBA)",
+      title: "4. How to Generate Accreditation & Progression Reports",
       icon: BarChart3,
       desc: "Visit 'Analytics & Reports'. Apply the dynamic filters (Department, Category, Academic Year, Date Range). The metrics and visual charts update dynamically. Click 'Export Filtered CSV' to download tabular spreadsheet data or click 'Report Preview' to print an official executive document.",
       actionLabel: "Open Analytics & Reports",

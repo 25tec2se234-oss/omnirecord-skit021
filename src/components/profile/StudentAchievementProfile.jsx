@@ -215,9 +215,9 @@ export const StudentAchievementProfile = () => {
             {studentRecords.map((rec) => {
               const isVerified = rec.verificationStatus === 'Verified';
               const isPending = rec.verificationStatus === 'Pending Review';
-              const isRejected = rec.verificationStatus === 'Rejected' || rec.verificationStatus === 'Needs Correction';
+              const isCorrection = rec.verificationStatus === 'Needs Correction';
 
-              const markerClass = isVerified ? 'verified' : isPending ? 'pending' : 'rejected';
+              const markerClass = isVerified ? 'verified' : isPending ? 'pending' : isCorrection ? 'correction' : 'rejected';
 
               return (
                 <div key={rec.id} className="timeline-item">

@@ -149,7 +149,7 @@ export const DepartmentEngagementChart = ({ records = [], departments = [] }) =>
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      {departments.slice(0, 6).map((dept) => {
+      {departments.map((dept) => {
         const count = records.filter(r => r.departmentId === dept.id).length;
         const widthPercent = Math.max(8, Math.round((count / maxRecords) * 100));
 
