@@ -18,20 +18,13 @@ const server = app.listen(env.PORT, async () => {
   console.log(`💚 Health Check: http://localhost:${env.PORT}${env.API_PREFIX}/health`);
   console.log(`====================================================`);
 
-  // Ensure database tables exist and seed default accounts
+  // Verify database connection and ensure seed records exist
   try {
-    console.log('🔄 Checking database tables and migrations...');
-    await execAsync('npx prisma migrate deploy', { cwd: process.cwd() });
-    console.log('🌱 Ensuring default seed records exist...');
+    console.log('🌱 Verifying default institutional records in database...');
     await seedDatabase();
-    console.log('✅ Database initialization & seed confirmed.');
+    console.log('✅ Institutional database connection & default accounts confirmed.');
   } catch (err: any) {
-    console.warn('⚠️ Startup migration note (normal if already migrated):', err?.message || err);
-    try {
-      await seedDatabase();
-    } catch (seedErr: any) {
-      console.warn('⚠️ Startup seed note:', seedErr?.message || seedErr);
-    }
+    console.warn('⚠️ Startup database check note:', err?.message || err);
   }
 });
 
