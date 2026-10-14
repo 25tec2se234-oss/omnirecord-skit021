@@ -12,11 +12,7 @@ import {
   AlertTriangle,
   XCircle,
   Search,
-  Filter,
-  Eye,
-  ArrowRight,
-  ShieldAlert,
-  Info
+  ShieldAlert
 } from 'lucide-react';
 
 export const VerificationCenter = () => {

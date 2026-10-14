@@ -3,7 +3,7 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge, getStatusBadgeVariant } from '../common/Badge';
 import { useApp } from '../../context/AppContext';
-import { Award, Mail, Phone, BookOpen, Calendar, GraduationCap } from 'lucide-react';
+import { Award, Mail, Phone, BookOpen, Calendar } from 'lucide-react';
 
 export const StudentDetailModal = ({ isOpen, onClose, student }) => {
   const { records, navigateTo } = useApp();

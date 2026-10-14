@@ -16,13 +16,14 @@ import {
 } from 'lucide-react';
 
 export const ProductOnboardingModal = () => {
-  const { isOnboardingOpen, setIsOnboardingOpen, completeOnboarding, navigateTo } = useApp();
+  const { isOnboardingOpen, completeOnboarding, navigateTo } = useApp();
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     if (isOnboardingOpen) {
-      setCurrentStep(0);
       document.body.style.overflow = 'hidden';
+    } else {
+      setCurrentStep(0);
     }
     return () => {
       document.body.style.overflow = 'unset';

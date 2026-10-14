@@ -28,7 +28,7 @@ export const StudentAchievementProfile = () => {
     return records
       .filter(r => r.studentId === currentStudent.id)
       .filter(r => selectedCategory === 'ALL' || r.category === selectedCategory)
-      .sort((a, b) => new Date(b.participationDate) - new Date(a.participationDate));
+      .sort((a, b) => new Date(b.participationDate || 0) - new Date(a.participationDate || 0));
   }, [records, currentStudent, selectedCategory]);
 
   const allStudentRecords = useMemo(() => {

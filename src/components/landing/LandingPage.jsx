@@ -1,7 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../common/Button';
-import { Badge } from '../common/Badge';
 import {
   GraduationCap,
   ShieldCheck,
@@ -9,23 +8,19 @@ import {
   Users,
   BarChart3,
   Building2,
-  FileCheck2,
   Sparkles,
   ArrowRight,
   CheckCircle2,
   XCircle,
   Search,
-  ExternalLink,
-  ChevronRight,
   Layers,
   HelpCircle,
   FileText
 } from 'lucide-react';
 
 export const LandingPage = () => {
-  const { navigateTo, restartProductTour, institutionInfo, records, students, activities } = useApp();
+  const { navigateTo, restartProductTour, records, students, activities } = useApp();
 
-  const verifiedCount = records.filter(r => r.verificationStatus === 'Verified').length;
   const pendingCount = records.filter(r => r.verificationStatus === 'Pending Review').length;
 
   return (

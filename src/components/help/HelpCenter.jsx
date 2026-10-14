@@ -5,7 +5,6 @@ import { Button } from '../common/Button';
 import {
   HelpCircle,
   PlayCircle,
-  FileText,
   Users,
   FileCheck2,
   ShieldCheck,

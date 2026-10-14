@@ -9,11 +9,7 @@ import {
   Building2,
   PlusCircle,
   Search,
-  Users,
-  CalendarDays,
-  FileCheck2,
   Edit2,
-  ArrowRight,
   Mail
 } from 'lucide-react';
 

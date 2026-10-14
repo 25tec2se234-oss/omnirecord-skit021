@@ -139,7 +139,12 @@ export const AppProvider = ({ children }) => {
 
   // Student CRUD
   const addStudent = (newStudent) => {
-    const id = `STU-${String(students.length + 1).padStart(3, '0')}`;
+    const maxStudentNum = students.reduce((max, s) => {
+      const match = (s.id || '').match(/STU-(\d+)/);
+      const num = match ? parseInt(match[1], 10) : 0;
+      return num > max ? num : max;
+    }, 0);
+    const id = `STU-${String(maxStudentNum + 1).padStart(3, '0')}`;
     const studentWithId = {
       ...newStudent,
       id,
@@ -193,7 +198,12 @@ export const AppProvider = ({ children }) => {
 
   // Participation Record CRUD & Verification Workflow
   const addRecord = (newRecord) => {
-    const id = `REC-2024-${String(records.length + 1).padStart(3, '0')}`;
+    const maxRecNum = records.reduce((max, r) => {
+      const match = (r.id || '').match(/REC-\d+-(\d+)/);
+      const num = match ? parseInt(match[1], 10) : 0;
+      return num > max ? num : max;
+    }, 0);
+    const id = `REC-2024-${String(maxRecNum + 1).padStart(3, '0')}`;
     const recordWithId = {
       ...newRecord,
       id,
@@ -294,7 +304,12 @@ export const AppProvider = ({ children }) => {
 
   // Activity Management
   const addActivity = (newAct) => {
-    const id = `ACT-${String(activities.length + 101)}`;
+    const maxActNum = activities.reduce((max, a) => {
+      const match = (a.id || '').match(/ACT-(\d+)/);
+      const num = match ? parseInt(match[1], 10) : 0;
+      return num > max ? num : max;
+    }, 100);
+    const id = `ACT-${maxActNum + 1}`;
     const actWithId = {
       ...newAct,
       id,
@@ -344,7 +359,11 @@ export const AppProvider = ({ children }) => {
 
   // Department Management
   const addDepartment = (newDept) => {
-    const id = `DEPT-${newDept.code.toUpperCase()}`;
+    const baseCode = (newDept.code || 'DEPT').trim().toUpperCase();
+    let id = `DEPT-${baseCode}`;
+    if (departments.some(d => d.id === id)) {
+      id = `DEPT-${baseCode}-${Date.now().toString().slice(-4)}`;
+    }
     const deptWithId = {
       ...newDept,
       id,

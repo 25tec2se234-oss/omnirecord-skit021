@@ -11,13 +11,11 @@ import {
   RotateCcw,
   FileText,
   User,
-  Calendar,
-  Award,
-  Sparkles
+  Award
 } from 'lucide-react';
 
 export const VerificationReviewModal = ({ isOpen, onClose, record }) => {
-  const { updateVerificationStatus, navigateTo } = useApp();
+  const { updateVerificationStatus } = useApp();
 
   const [activeAction, setActiveAction] = useState(null); // 'reject' | 'correction' | null
   const [feedbackNotes, setFeedbackNotes] = useState('');

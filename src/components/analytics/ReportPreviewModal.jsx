@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { useApp } from '../../context/AppContext';
-import { Printer, Download, FileText, CheckCircle2 } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 export const ReportPreviewModal = ({ isOpen, onClose, filteredRecords, filterSummary }) => {
-  const { institutionInfo, departments } = useApp();
+  const { institutionInfo } = useApp();
 
-  if (!isOpen) return null;
-
-  const todayStr = new Intl.DateTimeFormat('en-US', {
+  const todayStr = useMemo(() => new Intl.DateTimeFormat('en-US', {
     dateStyle: 'full',
     timeStyle: 'medium'
-  }).format(new Date());
+  }).format(new Date()), []);
+
+  if (!isOpen) return null;
 
   const verifiedCount = filteredRecords.filter(r => r.verificationStatus === 'Verified').length;
   const pendingCount = filteredRecords.filter(r => r.verificationStatus === 'Pending Review').length;

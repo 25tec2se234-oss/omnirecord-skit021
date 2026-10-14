@@ -11,7 +11,6 @@ import {
   CalendarDays,
   PlusCircle,
   Search,
-  Filter,
   LayoutGrid,
   List,
   Eye,
@@ -19,13 +18,11 @@ import {
   Trash2,
   Users,
   MapPin,
-  Calendar,
-  Clock,
-  ArrowUpDown
+  Calendar
 } from 'lucide-react';
 
 export const ActivityManagement = ({ onOpenRecordModal }) => {
-  const { activities, records, departments, deleteActivity, navigateTo } = useApp();
+  const { activities, records, deleteActivity, navigateTo } = useApp();
 
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [searchTerm, setSearchTerm] = useState('');

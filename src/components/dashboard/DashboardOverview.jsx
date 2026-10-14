@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { StatCard } from '../common/StatCard';
 import { Button } from '../common/Button';
@@ -18,12 +18,10 @@ import {
   ShieldCheck,
   FileDown,
   ArrowRight,
-  Sparkles,
-  ExternalLink,
-  Award
+  Sparkles
 } from 'lucide-react';
 
-export const DashboardOverview = ({ onOpenRecordModal, onOpenReviewModal }) => {
+export const DashboardOverview = ({ onOpenRecordModal }) => {
   const {
     students,
     records,
@@ -37,12 +35,12 @@ export const DashboardOverview = ({ onOpenRecordModal, onOpenReviewModal }) => {
   const verifiedRecords = records.filter(r => r.verificationStatus === 'Verified');
   const activeActivities = activities.filter(a => a.status === 'Ongoing' || a.status === 'Upcoming');
 
-  const todayStr = new Intl.DateTimeFormat('en-US', {
+  const todayStr = useMemo(() => new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  }).format(new Date());
+  }).format(new Date()), []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>

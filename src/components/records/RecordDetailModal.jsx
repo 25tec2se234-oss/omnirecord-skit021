@@ -8,13 +8,7 @@ import {
   Calendar,
   User,
   ShieldCheck,
-  Award,
-  Layers,
-  Clock,
-  ExternalLink,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle
+  Award
 } from 'lucide-react';
 
 export const RecordDetailModal = ({ isOpen, onClose, record, onOpenEdit }) => {

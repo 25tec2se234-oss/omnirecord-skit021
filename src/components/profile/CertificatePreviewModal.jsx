@@ -1,9 +1,8 @@
 import React from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { Badge } from '../common/Badge';
 import { useApp } from '../../context/AppContext';
-import { Award, ShieldCheck, Printer, CheckCircle2, QrCode } from 'lucide-react';
+import { Award, ShieldCheck, Printer, CheckCircle2 } from 'lucide-react';
 
 export const CertificatePreviewModal = ({ isOpen, onClose, record, student }) => {
   const { institutionInfo } = useApp();

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Breadcrumbs } from '../common/Breadcrumbs';
 import { Button } from '../common/Button';
-import { Badge, getStatusBadgeVariant } from '../common/Badge';
+import { Badge } from '../common/Badge';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../common/EmptyState';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -12,9 +12,6 @@ import {
   Users,
   UserPlus,
   Search,
-  Filter,
-  MoreVertical,
-  ExternalLink,
   Edit2,
   Trash2,
   Eye,

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { useApp } from '../../context/AppContext';
-import { Upload, FileText, CheckCircle2, X } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, X } from 'lucide-react';
 
 export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
-  const { students, activities, addRecord, updateRecord } = useApp();
+  const { students, activities, records, addRecord, updateRecord } = useApp();
 
   const [formData, setFormData] = useState({
     studentId: '',
@@ -82,6 +82,16 @@ export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
       }));
     }
   };
+
+  const duplicateRecord = useMemo(() => {
+    if (!formData.studentId || !formData.activityId) return null;
+    return records.find(
+      (r) =>
+        r.studentId === formData.studentId &&
+        r.activityId === formData.activityId &&
+        (!record || r.id !== record.id)
+    );
+  }, [records, formData.studentId, formData.activityId, record]);
 
   const validate = () => {
     const newErrors = {};
@@ -175,6 +185,28 @@ export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
             {errors.activityId && <div className="form-error">{errors.activityId}</div>}
           </div>
         </div>
+
+        {duplicateRecord && (
+          <div
+            style={{
+              background: 'var(--warning-bg)',
+              border: '1px solid var(--warning-border)',
+              borderRadius: 8,
+              padding: '0.65rem 0.85rem',
+              fontSize: '0.78rem',
+              color: '#92400E',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: '1rem'
+            }}
+          >
+            <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+            <span>
+              <strong>Duplicate Record Notice:</strong> A participation record (<strong>{duplicateRecord.id}</strong> • <em>{duplicateRecord.achievementLevel}</em>) is already registered for this student and activity.
+            </span>
+          </div>
+        )}
 
         <div className="form-row">
           <div className="form-group">

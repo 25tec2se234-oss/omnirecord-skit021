@@ -4,14 +4,9 @@ import { Button } from '../common/Button';
 import { Badge, getStatusBadgeVariant } from '../common/Badge';
 import { useApp } from '../../context/AppContext';
 import {
-  Calendar,
-  MapPin,
-  UserCheck,
-  Building2,
   Users,
   Award,
-  PlusCircle,
-  ExternalLink
+  PlusCircle
 } from 'lucide-react';
 
 export const ActivityDetailModal = ({ isOpen, onClose, activity, onOpenRecordModal }) => {
