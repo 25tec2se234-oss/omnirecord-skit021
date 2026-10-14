@@ -75,7 +75,7 @@ export const LandingPage = () => {
                 PEHCHAAN
               </div>
               <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--primary-orange)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                SKIT021 - By Team Eco-Novators
+                SKIT021
               </div>
             </div>
           </div>
