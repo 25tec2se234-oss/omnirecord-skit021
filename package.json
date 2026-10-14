@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server:dev": "npm --prefix server run dev",
+    "server:build": "npm --prefix server run build",
+    "server:start": "npm --prefix server run start",
+    "server:test": "npm --prefix server run test:ts",
+    "test:all": "node src/test_functional_audit.js && npm --prefix server run test:ts"
   },
   "dependencies": {
     "lucide-react": "^1.56.0",

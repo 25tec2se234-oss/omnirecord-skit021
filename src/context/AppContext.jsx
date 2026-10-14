@@ -7,6 +7,7 @@ import {
   INITIAL_NOTIFICATIONS,
   INSTITUTION_INFO
 } from '../data/initialData';
+import { api } from '../services/api';
 
 const AppContext = createContext(null);
 
@@ -71,7 +72,63 @@ export const AppProvider = ({ children }) => {
   // Toasts
   const [toasts, setToasts] = useState([]);
 
-  // Sync to LocalStorage
+  // Backend Connection & User Session State
+  const [isBackendConnected, setIsBackendConnected] = useState(false);
+  const [isLoadingBackend, setIsLoadingBackend] = useState(false);
+  const [currentUser, setCurrentUser] = useState({
+    name: 'Institutional Administrator',
+    email: 'studentaffairs@skit.ac.in',
+    role: 'INSTITUTION_ADMIN',
+    institutionCode: 'SKIT-021'
+  });
+  const [activeRole, setActiveRole] = useState('INSTITUTION_ADMIN');
+
+  // Load live data from backend API
+  const refreshBackendData = async () => {
+    setIsLoadingBackend(true);
+    try {
+      const health = await api.checkHealth();
+      if (health.status === 'UP' || health.database === 'CONNECTED') {
+        setIsBackendConnected(true);
+
+        // Fetch parallel resources from backend
+        const [deptRes, stuRes, actRes, recRes, notifRes] = await Promise.allSettled([
+          api.departments.list(),
+          api.students.list({ limit: 100 }),
+          api.activities.list({ limit: 100 }),
+          api.records.list({ limit: 100 }),
+          api.notifications.list()
+        ]);
+
+        if (deptRes.status === 'fulfilled' && deptRes.value?.data) {
+          setDepartments(deptRes.value.data);
+        }
+        if (stuRes.status === 'fulfilled' && stuRes.value?.data) {
+          setStudents(stuRes.value.data);
+        }
+        if (actRes.status === 'fulfilled' && actRes.value?.data) {
+          setActivities(actRes.value.data);
+        }
+        if (recRes.status === 'fulfilled' && recRes.value?.data) {
+          setRecords(recRes.value.data);
+        }
+        if (notifRes.status === 'fulfilled' && notifRes.value?.data?.notifications) {
+          setNotifications(notifRes.value.data.notifications);
+        }
+      }
+    } catch {
+      // In standalone frontend prototype mode, gracefully preserve local store
+      setIsBackendConnected(false);
+    } finally {
+      setIsLoadingBackend(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshBackendData();
+  }, []);
+
+  // Sync to LocalStorage as secondary cache
   useEffect(() => {
     safeStorageSet(STORAGE_KEYS.STUDENTS, students);
   }, [students]);
@@ -138,7 +195,24 @@ export const AppProvider = ({ children }) => {
   };
 
   // Student CRUD
-  const addStudent = (newStudent) => {
+  const addStudent = async (newStudent) => {
+    if (isBackendConnected) {
+      try {
+        const res = await api.students.create(newStudent);
+        if (res.data) {
+          setStudents((prev) => [res.data, ...prev]);
+          addToast({
+            title: "Student Added",
+            message: `${res.data.name} (${res.data.studentId}) registered in database.`,
+            type: "success"
+          });
+          return res.data;
+        }
+      } catch (err) {
+        console.warn("Backend student creation failed, using local store:", err);
+      }
+    }
+
     const maxStudentNum = students.reduce((max, s) => {
       const match = (s.id || '').match(/STU-(\d+)/);
       const num = match ? parseInt(match[1], 10) : 0;
@@ -160,14 +234,22 @@ export const AppProvider = ({ children }) => {
     return studentWithId;
   };
 
-  const updateStudent = (id, updatedData) => {
+  const updateStudent = async (id, updatedData) => {
+    if (isBackendConnected) {
+      try {
+        await api.students.update(id, updatedData);
+      } catch (err) {
+        console.warn("Backend student update failed, applying locally:", err);
+      }
+    }
+
     setStudents((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...updatedData } : s))
+      prev.map((s) => (s.id === id || s.studentId === id ? { ...s, ...updatedData } : s))
     );
     // Update referential student data in records as well
     setRecords((prev) =>
       prev.map((r) =>
-        r.studentId === id
+        r.studentId === id || r.studentRegNo === id
           ? {
               ...r,
               studentName: updatedData.name || r.studentName,
@@ -184,20 +266,45 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const deleteStudent = (id) => {
-    const student = students.find((s) => s.id === id);
-    setStudents((prev) => prev.filter((s) => s.id !== id));
-    // Remove related records or decouple
-    setRecords((prev) => prev.filter((r) => r.studentId !== id));
+  const deleteStudent = async (id) => {
+    if (isBackendConnected) {
+      try {
+        await api.students.delete(id);
+      } catch (err) {
+        console.warn("Backend student archive failed, applying locally:", err);
+      }
+    }
+
+    const student = students.find((s) => s.id === id || s.studentId === id);
+    setStudents((prev) => prev.filter((s) => s.id !== id && s.studentId !== id));
+    setRecords((prev) => prev.filter((r) => r.studentId !== id && r.studentRegNo !== id));
     addToast({
       title: "Student Removed",
-      message: `${student ? student.name : 'Student'} and associated demo records removed.`,
+      message: `${student ? student.name : 'Student'} and associated records removed.`,
       type: "warning"
     });
   };
 
   // Participation Record CRUD & Verification Workflow
-  const addRecord = (newRecord) => {
+  const addRecord = async (newRecord) => {
+    if (isBackendConnected) {
+      try {
+        const res = await api.records.create(newRecord);
+        if (res.data) {
+          setRecords((prev) => [res.data, ...prev]);
+          refreshBackendData();
+          addToast({
+            title: "Participation Record Created",
+            message: `Record ${res.data.recordNumber} submitted to PostgreSQL verification queue.`,
+            type: "success"
+          });
+          return res.data;
+        }
+      } catch (err) {
+        console.warn("Backend record creation failed, using local store:", err);
+      }
+    }
+
     const maxRecNum = records.reduce((max, r) => {
       const match = (r.id || '').match(/REC-\d+-(\d+)/);
       const num = match ? parseInt(match[1], 10) : 0;
@@ -235,9 +342,17 @@ export const AppProvider = ({ children }) => {
     return recordWithId;
   };
 
-  const updateRecord = (id, updatedData) => {
+  const updateRecord = async (id, updatedData) => {
+    if (isBackendConnected) {
+      try {
+        await api.records.update(id, updatedData);
+      } catch (err) {
+        console.warn("Backend record update failed, applying locally:", err);
+      }
+    }
+
     setRecords((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, ...updatedData } : r))
+      prev.map((r) => (r.id === id || r.recordNumber === id ? { ...r, ...updatedData } : r))
     );
     addToast({
       title: "Record Updated",
@@ -246,8 +361,16 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const deleteRecord = (id) => {
-    setRecords((prev) => prev.filter((r) => r.id !== id));
+  const deleteRecord = async (id) => {
+    if (isBackendConnected) {
+      try {
+        await api.records.delete(id);
+      } catch (err) {
+        console.warn("Backend record delete failed, applying locally:", err);
+      }
+    }
+
+    setRecords((prev) => prev.filter((r) => r.id !== id && r.recordNumber !== id));
     addToast({
       title: "Record Deleted",
       message: `Record ${id} removed from the platform.`,
@@ -255,13 +378,32 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const updateVerificationStatus = (recordId, status, notes, reviewerName = "Institutional Reviewer") => {
+  const updateVerificationStatus = async (recordId, status, notes, reviewerName = "Institutional Reviewer") => {
     const today = new Date().toISOString().split('T')[0];
     let targetRecord = null;
 
+    if (isBackendConnected) {
+      try {
+        const statusMap = {
+          'Verified': 'VERIFIED',
+          'Needs Correction': 'NEEDS_CORRECTION',
+          'Rejected': 'REJECTED'
+        };
+        const backendStatus = statusMap[status] || status;
+        await api.verification.submitReview({
+          recordId,
+          status: backendStatus,
+          notes: notes || (status === 'Verified' ? 'Verified by authorized reviewer.' : undefined)
+        });
+        refreshBackendData();
+      } catch (err) {
+        console.warn("Backend verification failed, applying locally:", err);
+      }
+    }
+
     setRecords((prev) =>
       prev.map((r) => {
-        if (r.id === recordId) {
+        if (r.id === recordId || r.recordNumber === recordId) {
           targetRecord = r;
           return {
             ...r,
@@ -303,7 +445,25 @@ export const AppProvider = ({ children }) => {
   };
 
   // Activity Management
-  const addActivity = (newAct) => {
+  const addActivity = async (newAct) => {
+    if (isBackendConnected) {
+      try {
+        const res = await api.activities.create(newAct);
+        if (res.data) {
+          setActivities((prev) => [res.data, ...prev]);
+          refreshBackendData();
+          addToast({
+            title: "Activity Created",
+            message: `Activity '${res.data.name}' added to institutional database.`,
+            type: "success"
+          });
+          return res.data;
+        }
+      } catch (err) {
+        console.warn("Backend activity creation failed, applying locally:", err);
+      }
+    }
+
     const maxActNum = activities.reduce((max, a) => {
       const match = (a.id || '').match(/ACT-(\d+)/);
       const num = match ? parseInt(match[1], 10) : 0;
@@ -324,9 +484,17 @@ export const AppProvider = ({ children }) => {
     return actWithId;
   };
 
-  const updateActivity = (id, updatedData) => {
+  const updateActivity = async (id, updatedData) => {
+    if (isBackendConnected) {
+      try {
+        await api.activities.update(id, updatedData);
+      } catch (err) {
+        console.warn("Backend activity update failed, applying locally:", err);
+      }
+    }
+
     setActivities((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, ...updatedData } : a))
+      prev.map((a) => (a.id === id || a.code === id ? { ...a, ...updatedData } : a))
     );
     // Sync activity name across records
     setRecords((prev) =>
@@ -347,9 +515,17 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const deleteActivity = (id) => {
-    const act = activities.find((a) => a.id === id);
-    setActivities((prev) => prev.filter((a) => a.id !== id));
+  const deleteActivity = async (id) => {
+    if (isBackendConnected) {
+      try {
+        await api.activities.delete(id);
+      } catch (err) {
+        console.warn("Backend activity delete failed, applying locally:", err);
+      }
+    }
+
+    const act = activities.find((a) => a.id === id || a.code === id);
+    setActivities((prev) => prev.filter((a) => a.id !== id && a.code !== id));
     addToast({
       title: "Activity Removed",
       message: `Activity ${act ? act.name : id} deleted.`,
@@ -358,7 +534,24 @@ export const AppProvider = ({ children }) => {
   };
 
   // Department Management
-  const addDepartment = (newDept) => {
+  const addDepartment = async (newDept) => {
+    if (isBackendConnected) {
+      try {
+        const res = await api.departments.create(newDept);
+        if (res.data) {
+          setDepartments((prev) => [...prev, res.data]);
+          addToast({
+            title: "Department Added",
+            message: `${res.data.name} (${res.data.code}) created successfully.`,
+            type: "success"
+          });
+          return res.data;
+        }
+      } catch (err) {
+        console.warn("Backend department creation failed, applying locally:", err);
+      }
+    }
+
     const baseCode = (newDept.code || 'DEPT').trim().toUpperCase();
     let id = `DEPT-${baseCode}`;
     if (departments.some(d => d.id === id)) {
@@ -378,9 +571,17 @@ export const AppProvider = ({ children }) => {
     return deptWithId;
   };
 
-  const updateDepartment = (id, updatedData) => {
+  const updateDepartment = async (id, updatedData) => {
+    if (isBackendConnected) {
+      try {
+        await api.departments.update(id, updatedData);
+      } catch (err) {
+        console.warn("Backend department update failed, applying locally:", err);
+      }
+    }
+
     setDepartments((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, ...updatedData } : d))
+      prev.map((d) => (d.id === id || d.code === id ? { ...d, ...updatedData } : d))
     );
     addToast({
       title: "Department Updated",
@@ -390,13 +591,29 @@ export const AppProvider = ({ children }) => {
   };
 
   // Notifications
-  const markNotificationAsRead = (id) => {
+  const markNotificationAsRead = async (id) => {
+    if (isBackendConnected) {
+      try {
+        await api.notifications.markRead(id);
+      } catch (err) {
+        console.warn("Backend mark notification failed:", err);
+      }
+    }
+
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
-  const markAllNotificationsAsRead = () => {
+  const markAllNotificationsAsRead = async () => {
+    if (isBackendConnected) {
+      try {
+        await api.notifications.markAllRead();
+      } catch (err) {
+        console.warn("Backend mark all notifications failed:", err);
+      }
+    }
+
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     addToast({
       title: "Notifications Cleared",
@@ -448,6 +665,14 @@ export const AppProvider = ({ children }) => {
         setIsSidebarCollapsed,
         isMobileSidebarOpen,
         setIsMobileSidebarOpen,
+
+        // Backend Integration & Session
+        isBackendConnected,
+        isLoadingBackend,
+        currentUser,
+        activeRole,
+        setActiveRole,
+        refreshBackendData,
 
         // Onboarding
         hasCompletedOnboarding,
