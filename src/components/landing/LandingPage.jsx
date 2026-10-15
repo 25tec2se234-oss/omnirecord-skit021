@@ -26,9 +26,11 @@ export const LandingPage = () => {
     students,
     activities,
     isBackendConnected,
-    setIsAuthModalOpen
+    setIsAuthModalOpen,
+    activeRole
   } = useApp();
 
+  const portalRoute = activeRole === 'STUDENT' ? 'student-dashboard' : activeRole === 'FACULTY_COORDINATOR' ? 'organiser-dashboard' : 'dashboard';
   const pendingCount = records.filter(r => r.verificationStatus === 'Pending Review').length;
 
   return (
@@ -152,7 +154,7 @@ export const LandingPage = () => {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => navigateTo('dashboard')}
+              onClick={() => navigateTo(portalRoute)}
               icon={ArrowRight}
               iconPosition="right"
             >
@@ -202,7 +204,7 @@ export const LandingPage = () => {
             <Button
               variant="primary"
               size="lg"
-              onClick={() => navigateTo('dashboard')}
+              onClick={() => navigateTo(portalRoute)}
               icon={ArrowRight}
               iconPosition="right"
             >

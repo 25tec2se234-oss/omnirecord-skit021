@@ -128,7 +128,7 @@ export const Sidebar = () => {
           <button
             type="button"
             className="brand-wrapper"
-            onClick={() => navigateTo('dashboard')}
+            onClick={() => navigateTo(activeRole === 'STUDENT' ? 'student-dashboard' : activeRole === 'FACULTY_COORDINATOR' ? 'organiser-dashboard' : 'dashboard')}
             title="Go to Dashboard"
           >
             <div className="brand-icon">

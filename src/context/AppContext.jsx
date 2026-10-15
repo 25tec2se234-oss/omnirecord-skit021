@@ -45,36 +45,97 @@ const safeStorageSet = (key, value) => {
   }
 };
 
+export const ROUTE_PATH_MAP = {
+  'landing': '/',
+  'login': '/login',
+  'portfolio-builder': '/portfolio-builder',
+  'student-dashboard': '/student-dashboard',
+  'student-submit': '/student-submit',
+  'student-portfolio': '/student-portfolio',
+  'dashboard': '/dashboard',
+  'organiser-dashboard': '/organiser-dashboard',
+  'students': '/students',
+  'staff': '/staff',
+  'records': '/records',
+  'activities': '/activities',
+  'verification': '/verification',
+  'profile': '/profile',
+  'departments': '/departments',
+  'analytics': '/analytics',
+  'notifications': '/notifications',
+  'settings': '/settings',
+  'help': '/help'
+};
+
+export const PATH_ROUTE_MAP = Object.entries(ROUTE_PATH_MAP).reduce((acc, [route, path]) => {
+  acc[path] = route;
+  return acc;
+}, {});
+
+export const getRouteAndParamsFromLocation = () => {
+  if (typeof window === 'undefined') return { route: 'landing', params: {} };
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  const searchParams = new URLSearchParams(window.location.search);
+  const studentIdParam = searchParams.get('studentId');
+  const recordIdParam = searchParams.get('recordId');
+
+  if (pathname.startsWith('/portfolio/')) {
+    const id = pathname.replace('/portfolio/', '').replace(/\/$/, '');
+    return { route: 'public-portfolio', params: { studentId: id } };
+  }
+
+  const matchedRoute = PATH_ROUTE_MAP[pathname];
+  if (matchedRoute) {
+    const params = {};
+    if (studentIdParam) params.studentId = studentIdParam;
+    if (recordIdParam) params.recordId = recordIdParam;
+    return { route: matchedRoute, params };
+  }
+
+  // Fallback: If on root '/', check whether user was in an active sub-route in this session
+  if (pathname === '/') {
+    try {
+      const savedRoute = sessionStorage.getItem('skit021_active_route');
+      if (savedRoute && savedRoute !== 'landing' && ROUTE_PATH_MAP[savedRoute]) {
+        let savedParams = {};
+        try {
+          const raw = sessionStorage.getItem('skit021_route_params');
+          if (raw) savedParams = JSON.parse(raw);
+        } catch {}
+        return { route: savedRoute, params: savedParams, restored: true };
+      }
+    } catch {}
+  }
+
+  return { route: 'landing', params: {} };
+};
+
 export const AppProvider = ({ children }) => {
+  // Resolve initial route and params synchronously from URL or session
+  const initialNav = getRouteAndParamsFromLocation();
+
   // Public portfolio routing state
   const [publicPortfolioStudentId, setPublicPortfolioStudentId] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      if (path.startsWith('/portfolio/')) {
-        return path.replace('/portfolio/', '');
-      }
-    }
+    if (initialNav.params?.studentId) return initialNav.params.studentId;
     return 'SKIT-2022-CS014';
   });
 
-  // Navigation & routing state with URL awareness
+  // Navigation & routing state with full URL synchronization
   const [currentRoute, setCurrentRoute] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      if (path.startsWith('/portfolio/')) {
-        return 'public-portfolio';
-      }
-      if (path === '/portfolio-builder') {
-        return 'portfolio-builder';
-      }
-      if (path === '/login') {
-        return 'login';
-      }
+    // If restored from session on '/', update URL history cleanly
+    if (initialNav.restored && typeof window !== 'undefined' && ROUTE_PATH_MAP[initialNav.route]) {
+      try {
+        window.history.replaceState({ route: initialNav.route }, '', ROUTE_PATH_MAP[initialNav.route]);
+      } catch {}
     }
-    return 'landing';
+    return initialNav.route;
   });
-  const [selectedStudentId, setSelectedStudentId] = useState('STU-001');
-  const [selectedRecordId, setSelectedRecordId] = useState(null);
+  const [selectedStudentId, setSelectedStudentId] = useState(() => {
+    return initialNav.params?.studentId || 'STU-001';
+  });
+  const [selectedRecordId, setSelectedRecordId] = useState(() => {
+    return initialNav.params?.recordId || null;
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -380,7 +441,7 @@ export const AppProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Navigation Helper with History PushState
+  // Navigation Helper with History PushState & URL Persistence
   const navigateTo = (route, params = {}) => {
     setCurrentRoute(route);
     if (params.studentId) {
@@ -391,18 +452,31 @@ export const AppProvider = ({ children }) => {
     setIsMobileSidebarOpen(false);
 
     if (typeof window !== 'undefined') {
-      let targetPath = '/';
+      let targetPath = ROUTE_PATH_MAP[route] || '/';
       if (route === 'public-portfolio') {
-        targetPath = `/portfolio/${params.studentId || publicPortfolioStudentId || selectedStudentId}`;
-      } else if (route === 'portfolio-builder') {
-        targetPath = '/portfolio-builder';
-      } else if (route === 'login') {
-        targetPath = '/login';
-      } else if (route === 'landing') {
-        targetPath = '/';
+        const id = params.studentId || publicPortfolioStudentId || selectedStudentId || 'STU-001';
+        targetPath = `/portfolio/${id}`;
+      } else if (params.studentId || params.recordId) {
+        const searchParams = new URLSearchParams();
+        if (params.studentId) searchParams.set('studentId', params.studentId);
+        if (params.recordId) searchParams.set('recordId', params.recordId);
+        targetPath += `?${searchParams.toString()}`;
       }
-      if (window.location.pathname !== targetPath) {
-        window.history.pushState(null, '', targetPath);
+
+      try {
+        sessionStorage.setItem('skit021_active_route', route);
+        if (params && Object.keys(params).length > 0) {
+          sessionStorage.setItem('skit021_route_params', JSON.stringify(params));
+        } else {
+          sessionStorage.removeItem('skit021_route_params');
+        }
+      } catch {
+        // ignore
+      }
+
+      const currentFullPath = window.location.pathname + window.location.search;
+      if (currentFullPath !== targetPath) {
+        window.history.pushState({ route, params }, '', targetPath);
       }
     }
 
@@ -413,18 +487,18 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window === 'undefined') return;
-      const path = window.location.pathname;
-      if (path.startsWith('/portfolio/')) {
-        const id = path.replace('/portfolio/', '');
-        setPublicPortfolioStudentId(id);
-        setCurrentRoute('public-portfolio');
-      } else if (path === '/portfolio-builder') {
-        setCurrentRoute('portfolio-builder');
-      } else if (path === '/login') {
-        setCurrentRoute('login');
-      } else if (path === '/') {
-        setCurrentRoute('landing');
+      const { route, params } = getRouteAndParamsFromLocation();
+      setCurrentRoute(route);
+      if (params.studentId) {
+        setSelectedStudentId(params.studentId);
+        setPublicPortfolioStudentId(params.studentId);
       }
+      if (params.recordId) {
+        setSelectedRecordId(params.recordId);
+      }
+      try {
+        sessionStorage.setItem('skit021_active_route', route);
+      } catch {}
     };
 
     window.addEventListener('popstate', handlePopState);

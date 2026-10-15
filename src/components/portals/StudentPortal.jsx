@@ -35,10 +35,40 @@ export const StudentPortal = () => {
     currentUser,
     addRecord,
     addToast,
-    navigateTo
+    navigateTo,
+    currentRoute
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'submit'
+  const getInitialTab = () => {
+    if (currentRoute === 'student-submit') return 'submit';
+    if (currentRoute === 'student-portfolio') return 'portfolio';
+    return 'dashboard';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  // Sync activeTab whenever route changes
+  React.useEffect(() => {
+    if (currentRoute === 'student-submit') {
+      setActiveTab('submit');
+    } else if (currentRoute === 'student-portfolio') {
+      setActiveTab('portfolio');
+    } else if (currentRoute === 'student-dashboard') {
+      setActiveTab('dashboard');
+    }
+  }, [currentRoute]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'submit') {
+      navigateTo('student-submit');
+    } else if (tab === 'portfolio') {
+      navigateTo('student-portfolio');
+    } else {
+      navigateTo('student-dashboard');
+    }
+  };
+
   const [portfolioCategoryFilter, setPortfolioCategoryFilter] = useState('ALL');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customAvatar, setCustomAvatar] = useState(null);
@@ -185,7 +215,7 @@ export const StudentPortal = () => {
 
     try {
       await addRecord(submissionPayload);
-      setActiveTab('dashboard');
+      handleTabChange('dashboard');
       handleRemoveFile();
       setFormData({
         activityId: activities[0]?.id || 'ACT-101',
@@ -249,7 +279,7 @@ export const StudentPortal = () => {
               variant="primary"
               size="sm"
               icon={PlusCircle}
-              onClick={() => setActiveTab('submit')}
+              onClick={() => handleTabChange('submit')}
             >
               Submit New Achievement
             </Button>
@@ -265,7 +295,7 @@ export const StudentPortal = () => {
               variant="outline"
               size="sm"
               icon={Award}
-              onClick={() => setActiveTab('portfolio')}
+              onClick={() => handleTabChange('portfolio')}
             >
               My Records ({verifiedRecords.length})
             </Button>
@@ -277,21 +307,21 @@ export const StudentPortal = () => {
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'dashboard' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleTabChange('dashboard')}
           >
             Student Overview
           </button>
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'portfolio' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setActiveTab('portfolio')}
+            onClick={() => handleTabChange('portfolio')}
           >
             My Portfolio & Credentials ({myRecords.length})
           </button>
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'submit' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setActiveTab('submit')}
+            onClick={() => handleTabChange('submit')}
           >
             Submit Achievement
           </button>
@@ -338,7 +368,7 @@ export const StudentPortal = () => {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => setActiveTab('portfolio')}
+                  onClick={() => handleTabChange('portfolio')}
                   style={{ color: 'var(--primary-orange)', fontSize: '0.78rem' }}
                 >
                   View All ({myRecords.length}) →
@@ -422,7 +452,7 @@ export const StudentPortal = () => {
                           achievementTitle: act.name,
                           category: act.category
                         });
-                        setActiveTab('submit');
+                        handleTabChange('submit');
                       }}
                     >
                       Submit Proof
@@ -873,7 +903,7 @@ export const StudentPortal = () => {
                 borderTop: '1px solid var(--border-subtle)'
               }}
             >
-              <Button variant="ghost" size="sm" onClick={() => setActiveTab('dashboard')}>
+              <Button variant="ghost" size="sm" onClick={() => handleTabChange('dashboard')}>
                 Cancel
               </Button>
               <Button

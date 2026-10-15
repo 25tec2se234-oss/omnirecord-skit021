@@ -99,8 +99,8 @@ const MainAppLayout = () => {
         return <OrganiserPortal />;
       case 'student-dashboard':
       case 'student-submit':
-        return <StudentPortal />;
       case 'student-portfolio':
+        return <StudentPortal />;
       case 'portfolio-builder':
         return <PortfolioBuilder />;
       case 'students':
