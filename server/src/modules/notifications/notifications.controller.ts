@@ -68,6 +68,14 @@ export async function markNotificationAsRead(
       return;
     }
 
+    if (existing.recipientUserId && existing.recipientUserId !== req.user!.userId) {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied: You cannot modify notifications belonging to another user.'
+      });
+      return;
+    }
+
     const updated = await prisma.notification.update({
       where: { id },
       data: { read: true }

@@ -14,7 +14,7 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().default('pehchaan_default_secure_session_secret_key_32bytes!'),
   JWT_SECRET: z.string().default('pehchaan_default_secure_jwt_secret_key_32bytes!'),
   COOKIE_NAME: z.string().default('pehchaan_session'),
-  COOKIE_SECURE: z.string().default('false').transform((v) => v === 'true'),
+  COOKIE_SECURE: z.string().default(process.env.NODE_ENV === 'production' ? 'true' : 'false').transform((v) => v === 'true'),
   COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
   SESSION_MAX_AGE_MS: z.string().default('86400000').transform((v) => parseInt(v, 10)),
   STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
@@ -36,5 +36,18 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.data;
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = env.DATABASE_URL;
+}
 export const isProd = env.NODE_ENV === 'production';
 export const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+
+// Production Security Check: Ensure real secrets are provided in production
+if (isProd) {
+  if (env.JWT_SECRET === 'pehchaan_default_secure_jwt_secret_key_32bytes!' || env.JWT_SECRET.length < 32) {
+    console.warn('⚠️ WARNING: Using fallback or short JWT_SECRET in production. Configure a cryptographically secure 256-bit JWT_SECRET in server environment variables.');
+  }
+  if (env.SESSION_SECRET === 'pehchaan_default_secure_session_secret_key_32bytes!' || env.SESSION_SECRET.length < 32) {
+    console.warn('⚠️ WARNING: Using fallback or short SESSION_SECRET in production. Configure a secure SESSION_SECRET in server environment variables.');
+  }
+}

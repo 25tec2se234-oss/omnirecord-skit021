@@ -4,7 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { prisma } from '../../db/client.js';
 import { AuthenticatedRequest } from '../../types/index.js';
-import { formatFileSize } from './evidence.service.js';
+import { formatFileSize, validateFileMagicBytes } from './evidence.service.js';
 
 export async function uploadEvidenceFile(
   req: AuthenticatedRequest,
@@ -32,6 +32,9 @@ export async function uploadEvidenceFile(
       where: {
         id: recordId,
         institutionId
+      },
+      include: {
+        studentProfile: true
       }
     });
 
@@ -44,8 +47,34 @@ export async function uploadEvidenceFile(
       return;
     }
 
-    // Compute file hash
+    // Role check: If student, verify they own the record
+    if (req.user!.role === 'STUDENT') {
+      const isOwner =
+        (record.studentProfile.userId && record.studentProfile.userId === req.user!.userId) ||
+        (record.studentProfile.email && record.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
+        fs.unlinkSync(req.file.path);
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You can only upload evidence documents for your own participation records.'
+        });
+        return;
+      }
+    }
+
+    // Inspect file content / magic bytes to prevent spoofing
     const fileBuffer = fs.readFileSync(req.file.path);
+    const isValidMagic = validateFileMagicBytes(fileBuffer, req.file.mimetype);
+    if (!isValidMagic) {
+      fs.unlinkSync(req.file.path);
+      res.status(400).json({
+        success: false,
+        error: 'Invalid file content: The binary file signature does not match the declared MIME type. Upload rejected.'
+      });
+      return;
+    }
+
+    // Compute file hash
     const sha256Checksum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     const evidenceFile = await prisma.evidenceFile.create({
@@ -132,10 +161,10 @@ export async function downloadEvidenceFile(
 
     // Role check: If student, verify they own the record
     if (req.user!.role === 'STUDENT') {
-      const studentProfile = await prisma.studentProfile.findFirst({
-        where: { userId: req.user!.userId, institutionId }
-      });
-      if (studentProfile && evidence.record.studentProfileId !== studentProfile.id) {
+      const isOwner =
+        (evidence.record.studentProfile.userId && evidence.record.studentProfile.userId === req.user!.userId) ||
+        (evidence.record.studentProfile.email && evidence.record.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
         res.status(403).json({
           success: false,
           error: 'Access denied: You can only access your own evidence documents.'
@@ -150,7 +179,10 @@ export async function downloadEvidenceFile(
       return;
     }
 
+    // Security Headers on File Download
     res.setHeader('Content-Type', evidence.mimeType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
     res.setHeader(
       'Content-Disposition',
       `inline; filename="${encodeURIComponent(evidence.originalFilename)}"`

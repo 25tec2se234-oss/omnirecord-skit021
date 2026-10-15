@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { Role } from '@prisma/client';
 import { prisma } from '../../db/client.js';
 import {
   hashPassword,
@@ -159,6 +160,15 @@ export async function register(req: Request, res: Response, next: NextFunction):
   try {
     const data = registerSchema.parse(req.body);
 
+    // Privilege Escalation Defense: Block uninvited attempts to register with reviewer or admin roles
+    if (data.role && data.role !== 'STUDENT' && !data.invitationToken) {
+      res.status(403).json({
+        success: false,
+        error: 'Privilege Escalation Prevention: Staff and reviewer roles cannot be self-selected without an official invitation token.'
+      });
+      return;
+    }
+
     const institution = await prisma.institution.findUnique({
       where: { code: data.institutionCode }
     });
@@ -200,6 +210,40 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
     const passwordHash = await hashPassword(data.password);
 
+    let assignedRole: Role = 'STUDENT';
+    if (data.role && data.role !== 'STUDENT') {
+      if (!data.invitationToken) {
+        res.status(403).json({
+          success: false,
+          error: 'Privilege Escalation Prevention: Staff and reviewer roles cannot be self-selected without an official invitation token.'
+        });
+        return;
+      }
+
+      const invitation = await prisma.invitation.findFirst({
+        where: {
+          institutionId: institution.id,
+          email: data.email.toLowerCase(),
+          token: data.invitationToken,
+          status: 'PENDING',
+          expiresAt: { gt: new Date() }
+        }
+      });
+
+      if (!invitation || invitation.role !== data.role) {
+        res.status(403).json({
+          success: false,
+          error: 'Invalid, expired, or mismatched invitation token for this role.'
+        });
+        return;
+      }
+
+      assignedRole = invitation.role;
+      if (invitation.departmentId) {
+        departmentId = invitation.departmentId;
+      }
+    }
+
     // Create user and membership in a transaction
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -216,14 +260,21 @@ export async function register(req: Request, res: Response, next: NextFunction):
         data: {
           institutionId: institution.id,
           userId: user.id,
-          role: data.role,
+          role: assignedRole,
           departmentId,
           status: 'ACTIVE'
         }
       });
 
+      if (data.invitationToken) {
+        await tx.invitation.updateMany({
+          where: { token: data.invitationToken },
+          data: { status: 'ACCEPTED' }
+        });
+      }
+
       // If registering as a student with roll number and dept, create student profile
-      if (data.role === 'STUDENT' && data.studentId && departmentId) {
+      if (assignedRole === 'STUDENT' && data.studentId && departmentId) {
         await tx.studentProfile.create({
           data: {
             institutionId: institution.id,
@@ -250,7 +301,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
       institutionId: institution.id,
       institutionCode: institution.code,
       institutionName: institution.name,
-      role: data.role,
+      role: assignedRole,
       departmentId
     };
 

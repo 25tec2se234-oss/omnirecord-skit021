@@ -22,11 +22,36 @@ export function errorHandler(
     return;
   }
 
+  // Handle JSON Syntax Errors (malformed payload)
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({
+      success: false,
+      error: 'Malformed JSON payload provided in request.'
+    });
+    return;
+  }
+
   // Handle Multer upload errors
   if (err.code === 'LIMIT_FILE_SIZE') {
     res.status(400).json({
       success: false,
       error: 'File upload exceeds maximum allowed file size.'
+    });
+    return;
+  }
+
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    res.status(400).json({
+      success: false,
+      error: 'Unexpected file field in upload request.'
+    });
+    return;
+  }
+
+  if (err.message && err.message.includes('Invalid file format')) {
+    res.status(400).json({
+      success: false,
+      error: err.message
     });
     return;
   }

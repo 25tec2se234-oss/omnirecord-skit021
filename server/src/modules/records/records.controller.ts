@@ -7,6 +7,28 @@ import {
   recordQuerySchema
 } from './records.schemas.js';
 
+async function resolveStudentProfile(userId: string, email: string, institutionId: string) {
+  let student = await prisma.studentProfile.findFirst({
+    where: {
+      institutionId,
+      userId
+    },
+    include: { department: true }
+  });
+
+  if (!student && email) {
+    student = await prisma.studentProfile.findFirst({
+      where: {
+        institutionId,
+        email: { equals: email, mode: 'insensitive' }
+      },
+      include: { department: true }
+    });
+  }
+
+  return student;
+}
+
 export async function listRecords(
   req: AuthenticatedRequest,
   res: Response,
@@ -39,7 +61,24 @@ export async function listRecords(
       where.category = query.category;
     }
 
-    if (query.studentId && query.studentId !== 'all') {
+    // Role-based ownership enforcement: Students can ONLY view their own records
+    if (req.user!.role === 'STUDENT') {
+      const student = await resolveStudentProfile(req.user!.userId, req.user!.email, institutionId);
+      if (!student) {
+        res.json({
+          success: true,
+          data: [],
+          meta: {
+            total: 0,
+            page: query.page,
+            limit: query.limit,
+            totalPages: 0
+          }
+        });
+        return;
+      }
+      where.studentProfileId = student.id;
+    } else if (query.studentId && query.studentId !== 'all') {
       where.OR = [
         { studentProfileId: query.studentId },
         { studentProfile: { studentId: query.studentId } }
@@ -47,14 +86,24 @@ export async function listRecords(
     }
 
     if (query.search) {
-      where.OR = [
+      const searchConditions: any[] = [
         { recordNumber: { contains: query.search, mode: 'insensitive' } },
         { certificateRef: { contains: query.search, mode: 'insensitive' } },
         { description: { contains: query.search, mode: 'insensitive' } },
-        { studentProfile: { name: { contains: query.search, mode: 'insensitive' } } },
-        { studentProfile: { studentId: { contains: query.search, mode: 'insensitive' } } },
         { activity: { name: { contains: query.search, mode: 'insensitive' } } }
       ];
+      if (req.user!.role !== 'STUDENT') {
+        searchConditions.push(
+          { studentProfile: { name: { contains: query.search, mode: 'insensitive' } } },
+          { studentProfile: { studentId: { contains: query.search, mode: 'insensitive' } } }
+        );
+      }
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+        delete where.OR;
+      } else {
+        where.OR = searchConditions;
+      }
     }
 
     const skip = (query.page - 1) * query.limit;
@@ -194,6 +243,20 @@ export async function getRecord(
       return;
     }
 
+    // Role-based ownership enforcement: Students can only view their own records
+    if (req.user!.role === 'STUDENT') {
+      const isOwner =
+        (r.studentProfile.userId && r.studentProfile.userId === req.user!.userId) ||
+        (r.studentProfile.email && r.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You do not have permission to view another student’s record.'
+        });
+        return;
+      }
+    }
+
     const latestReview = r.reviews[0];
 
     const formatted = {
@@ -259,14 +322,34 @@ export async function createRecord(
     const data = createRecordSchema.parse(req.body);
     const institutionId = req.user!.institutionId;
 
-    // Resolve student in same institution
-    const student = await prisma.studentProfile.findFirst({
-      where: {
-        institutionId,
-        OR: [{ id: data.studentId }, { studentId: data.studentId }]
-      },
-      include: { department: true }
-    });
+    let student: any;
+    if (req.user!.role === 'STUDENT') {
+      student = await resolveStudentProfile(req.user!.userId, req.user!.email, institutionId);
+      if (!student) {
+        res.status(400).json({
+          success: false,
+          error: 'Your authenticated account does not have an associated student profile in this institution.'
+        });
+        return;
+      }
+      // Prohibit student from spoofing another student's ID in request
+      if (data.studentId && data.studentId !== student.id && data.studentId !== student.studentId) {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You cannot create participation records for other students.'
+        });
+        return;
+      }
+    } else {
+      // Resolve student in same institution for staff/coordinators
+      student = await prisma.studentProfile.findFirst({
+        where: {
+          institutionId,
+          OR: [{ id: data.studentId }, { studentId: data.studentId }]
+        },
+        include: { department: true }
+      });
+    }
 
     if (!student) {
       res.status(400).json({
@@ -422,6 +505,9 @@ export async function updateRecord(
       where: {
         institutionId,
         OR: [{ id }, { recordNumber: id }]
+      },
+      include: {
+        studentProfile: true
       }
     });
 
@@ -430,13 +516,26 @@ export async function updateRecord(
       return;
     }
 
-    // Verified records cannot be modified without formal review or coordinator privilege
-    if (existing.verificationStatus === 'VERIFIED' && req.user!.role === 'STUDENT') {
-      res.status(403).json({
-        success: false,
-        error: 'Verified participation records cannot be modified directly.'
-      });
-      return;
+    // Role-based ownership enforcement
+    if (req.user!.role === 'STUDENT') {
+      const isOwner =
+        (existing.studentProfile.userId && existing.studentProfile.userId === req.user!.userId) ||
+        (existing.studentProfile.email && existing.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You cannot modify records belonging to other students.'
+        });
+        return;
+      }
+
+      if (existing.verificationStatus === 'VERIFIED') {
+        res.status(403).json({
+          success: false,
+          error: 'Verified participation records cannot be modified directly.'
+        });
+        return;
+      }
     }
 
     const updated = await prisma.participationRecord.update({
@@ -491,6 +590,9 @@ export async function deleteRecord(
       where: {
         institutionId,
         OR: [{ id }, { recordNumber: id }]
+      },
+      include: {
+        studentProfile: true
       }
     });
 
@@ -499,8 +601,26 @@ export async function deleteRecord(
       return;
     }
 
-    // Do not permit ordinary users to delete verified academic records
-    if (existing.verificationStatus === 'VERIFIED' && req.user!.role !== 'INSTITUTION_ADMIN') {
+    // Role-based ownership enforcement
+    if (req.user!.role === 'STUDENT') {
+      const isOwner =
+        (existing.studentProfile.userId && existing.studentProfile.userId === req.user!.userId) ||
+        (existing.studentProfile.email && existing.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You cannot delete records belonging to other students.'
+        });
+        return;
+      }
+      if (existing.verificationStatus === 'VERIFIED') {
+        res.status(403).json({
+          success: false,
+          error: 'Verified academic records cannot be deleted. Contact your institution administrator.'
+        });
+        return;
+      }
+    } else if (existing.verificationStatus === 'VERIFIED' && req.user!.role !== 'INSTITUTION_ADMIN') {
       res.status(403).json({
         success: false,
         error: 'Verified academic records cannot be deleted. Contact your institution administrator.'

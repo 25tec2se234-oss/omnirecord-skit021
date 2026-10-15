@@ -20,21 +20,21 @@ export async function runDatabaseInit() {
     console.log('ℹ️ [DB-INIT] Migration resolve check passed (no stuck migration to resolve).');
   }
 
-  // Step 2: Push Prisma schema directly to PostgreSQL database (creates all 13 tables, enums, indexes)
+  // Step 2: Safe database schema migration (prioritizing versioned migrations without data loss)
   try {
-    console.log('🔄 [DB-INIT] Step 2/3: Synchronizing Prisma schema to PostgreSQL (db push)...');
-    execSync('npx prisma db push --accept-data-loss', {
-      stdio: 'inherit',
-      timeout: 60000
-    });
-    console.log('✅ [DB-INIT] All database tables, enums, and constraints are synchronized.');
-  } catch (err: any) {
-    console.warn('⚠️ [DB-INIT] db push note (attempting migrate deploy as fallback):', err?.message || err);
+    console.log('🔄 [DB-INIT] Step 2/3: Applying versioned production database migrations (migrate deploy)...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit', timeout: 60000 });
+    console.log('✅ [DB-INIT] All database migrations applied successfully.');
+  } catch (migErr: any) {
+    console.warn('ℹ️ [DB-INIT] migrate deploy note, falling back to safe schema sync (db push):', migErr?.message || migErr);
     try {
-      execSync('npx prisma migrate deploy', { stdio: 'inherit', timeout: 60000 });
-      console.log('✅ [DB-INIT] Fallback migrate deploy succeeded.');
-    } catch (migErr: any) {
-      console.warn('⚠️ [DB-INIT] migrate deploy note:', migErr?.message || migErr);
+      execSync('npx prisma db push', {
+        stdio: 'inherit',
+        timeout: 60000
+      });
+      console.log('✅ [DB-INIT] Schema synchronized safely without data loss.');
+    } catch (pushErr: any) {
+      console.warn('⚠️ [DB-INIT] Database sync warning:', pushErr?.message || pushErr);
     }
   }
 

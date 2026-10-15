@@ -14,7 +14,8 @@ export const registerSchema = z.object({
   institutionCode: z.string().min(2, 'Valid institution code is required'),
   role: z.enum(['STUDENT', 'FACULTY_COORDINATOR']).default('STUDENT'),
   departmentCode: z.string().optional(),
-  studentId: z.string().optional()
+  studentId: z.string().optional(),
+  invitationToken: z.string().optional()
 });
 
 export const resetPasswordRequestSchema = z.object({

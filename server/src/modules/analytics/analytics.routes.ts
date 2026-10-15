@@ -12,7 +12,7 @@ const router = Router();
 
 router.use(authenticate, enforceTenantIsolation);
 
-router.get('/dashboard', getDashboardOverview);
+router.get('/dashboard', requireStaff, getDashboardOverview);
 router.get('/export/records', requireStaff, exportRecordsCsv);
 router.get('/export/students', requireStaff, exportStudentsCsv);
 

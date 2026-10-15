@@ -62,8 +62,10 @@ export async function submitVerificationReview(
       return;
     }
 
-    // ANTI-SELF-APPROVAL RULE: Check if reviewer is the student who owns this record
-    if (record.studentProfile.userId && record.studentProfile.userId === req.user!.userId) {
+    // ANTI-SELF-APPROVAL RULE: Check if reviewer is the student who owns this record (by userId or email)
+    const isOwnerByUserId = record.studentProfile.userId && record.studentProfile.userId === req.user!.userId;
+    const isOwnerByEmail = record.studentProfile.email && record.studentProfile.email.toLowerCase() === req.user!.email.toLowerCase();
+    if (isOwnerByUserId || isOwnerByEmail) {
       res.status(403).json({
         success: false,
         error: 'Security Policy Violation: Self-approval is strictly forbidden. A student cannot verify their own participation record.'
@@ -71,8 +73,39 @@ export async function submitVerificationReview(
       return;
     }
 
+    // DEPARTMENT REVIEW BOUNDARY: Faculty coordinators may only review submissions for their assigned department
+    if (
+      req.user!.role === 'FACULTY_COORDINATOR' &&
+      req.user!.departmentId &&
+      req.user!.departmentId !== record.departmentId
+    ) {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied: You are only authorized to verify participation records within your assigned department.'
+      });
+      return;
+    }
+
     const previousStatus = record.verificationStatus;
     const newStatus = data.status;
+
+    // VALIDATE PERMITTED STATE TRANSITIONS
+    if (previousStatus === 'VERIFIED') {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid state transition: Verified records cannot be directly altered. An institution administrator must formally reopen the record first.'
+      });
+      return;
+    }
+
+    if (previousStatus === 'REJECTED' && req.user!.role !== 'INSTITUTION_ADMIN' && !req.user!.isPlatformAdmin) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid state transition: Rejected records cannot be approved without being reopened by an administrator.'
+      });
+      return;
+    }
+
     const reviewerNotes = data.notes || (newStatus === 'VERIFIED' ? 'Verified by authorized reviewer.' : '');
 
     const result = await prisma.$transaction(async (tx) => {

@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
-import { env, allowedOrigins } from './config/env.js';
+import { env, allowedOrigins, isProd } from './config/env.js';
 import { prisma } from './db/client.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
@@ -112,9 +112,31 @@ export function createApp(): Express {
     }
   });
 
-  // Database Setup & Sync Endpoint
-  const initDbHandler = async (_req: Request, res: Response) => {
+  // Database Setup & Sync Endpoint (Protected with Admin Key or Platform Admin)
+  const initDbHandler = async (req: Request, res: Response) => {
     try {
+      const adminKey = req.headers['x-admin-key'] as string;
+      const authHeader = req.headers.authorization;
+      const hasValidKey = adminKey && adminKey === env.JWT_SECRET;
+
+      let isPlatformAdmin = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        const { verifyToken } = await import('./utils/auth.js');
+        const token = authHeader.split(' ')[1];
+        const payload = verifyToken(token);
+        if (payload?.isPlatformAdmin) {
+          isPlatformAdmin = true;
+        }
+      }
+
+      if (!hasValidKey && !isPlatformAdmin) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized: Administrative setup key or platform administrator credentials are required.'
+        });
+        return;
+      }
+
       const { seedDatabase } = await import('./db/seed.js');
       const { exec } = await import('child_process');
       const { promisify } = await import('util');
@@ -137,7 +159,7 @@ export function createApp(): Express {
     } catch (e: any) {
       res.status(500).json({
         success: false,
-        error: e.message
+        error: isProd ? 'Database maintenance operation failed.' : e.message
       });
     }
   };

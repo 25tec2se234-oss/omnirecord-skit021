@@ -20,6 +20,28 @@ export async function listStudents(
       institutionId
     };
 
+    // Role-based privacy enforcement: Students can only view their own profile in directory
+    if (req.user!.role === 'STUDENT') {
+      const ownProfile = await prisma.studentProfile.findFirst({
+        where: {
+          institutionId,
+          OR: [
+            { userId: req.user!.userId },
+            { email: { equals: req.user!.email, mode: 'insensitive' } }
+          ]
+        }
+      });
+      if (!ownProfile) {
+        res.json({
+          success: true,
+          data: [],
+          meta: { total: 0, page: 1, limit: query.limit, totalPages: 0 }
+        });
+        return;
+      }
+      where.id = ownProfile.id;
+    }
+
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -134,6 +156,20 @@ export async function getStudent(
     if (!student) {
       res.status(404).json({ success: false, error: 'Student not found in this institution' });
       return;
+    }
+
+    // Role-based privacy enforcement: Students cannot view other students' profiles
+    if (req.user!.role === 'STUDENT') {
+      const isOwner =
+        (student.userId && student.userId === req.user!.userId) ||
+        (student.email && student.email.toLowerCase() === req.user!.email.toLowerCase());
+      if (!isOwner) {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied: You do not have permission to view other students’ private profiles.'
+        });
+        return;
+      }
     }
 
     const records = student.participationRecords.map((r: any) => ({
