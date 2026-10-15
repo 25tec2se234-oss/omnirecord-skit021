@@ -19,13 +19,15 @@ import {
   Sparkles,
   ChevronRight,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  UserPlus,
+  Phone
 } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { login, navigateTo, isBackendConnected, refreshBackendData, addToast } = useApp();
+  const { login, register, navigateTo, isBackendConnected, refreshBackendData, addToast } = useApp();
 
-  // Mode: 'signin' | 'demo' | 'forgot'
+  // Mode: 'signin' | 'register' | 'demo' | 'forgot'
   const [authMode, setAuthMode] = useState('signin');
   const [email, setEmail] = useState('studentaffairs@skit.ac.in');
   const [password, setPassword] = useState('DemoPassword2024!');
@@ -34,6 +36,15 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSyncingDb, setIsSyncingDb] = useState(false);
+
+  // Registration state
+  const [regFullName, setRegFullName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regRole, setRegRole] = useState('STUDENT');
+  const [regStudentId, setRegStudentId] = useState('');
+  const [regDepartmentCode, setRegDepartmentCode] = useState('CS');
+  const [regPhone, setRegPhone] = useState('');
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
@@ -99,6 +110,60 @@ export const LoginPage = () => {
     } catch (err) {
       setErrorMessage(
         err.message || 'Authentication failed. Please verify your credentials or check connection.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    if (e) e.preventDefault();
+    setErrorMessage('');
+
+    if (!regFullName.trim()) {
+      setErrorMessage('Full name is required.');
+      return;
+    }
+    if (!regEmail.trim()) {
+      setErrorMessage('Email address is required.');
+      return;
+    }
+    if (!regPassword || regPassword.length < 8) {
+      setErrorMessage('Password must be at least 8 characters.');
+      return;
+    }
+    if (regRole === 'STUDENT' && !regStudentId.trim()) {
+      setErrorMessage('Student Roll / ID Number is required for student registration.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const payload = {
+        fullName: regFullName.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        role: regRole,
+        institutionCode: 'SKIT-021',
+        departmentCode: regDepartmentCode,
+        studentId: regRole === 'STUDENT' ? regStudentId.trim() : undefined,
+        phone: regPhone.trim() || undefined
+      };
+
+      const data = await register(payload);
+      const role = data?.user?.role || regRole;
+
+      if (role === 'STUDENT') {
+        navigateTo('student-dashboard');
+      } else if (role === 'FACULTY_COORDINATOR') {
+        navigateTo('organiser-dashboard');
+      } else {
+        navigateTo('dashboard');
+      }
+    } catch (err) {
+      setErrorMessage(
+        err.message || 'Registration failed. An account with this email may already exist or input was invalid.'
       );
     } finally {
       setIsLoading(false);
@@ -290,31 +355,44 @@ export const LoginPage = () => {
               <span>Swami Keshvanand Institute of Technology (SKIT021)</span>
             </div>
             <h2 className="form-title">
-              {authMode === 'forgot' ? 'Reset Password' : 'Sign in to Pehchaan'}
+              {authMode === 'forgot'
+                ? 'Reset Password'
+                : authMode === 'register'
+                ? 'Create Authentic Account'
+                : 'Sign in to Pehchaan'}
             </h2>
             <p className="form-subtitle">
               {authMode === 'forgot'
                 ? 'Enter your institutional email address to receive password reset instructions.'
+                : authMode === 'register'
+                ? 'Register directly into the official SKIT021 institutional verification database.'
                 : 'Access your dedicated College Admin, Event Organiser, or Student portal.'}
             </p>
           </div>
 
-          {/* Mode Selector (Sign In vs Quick Persona Selector) */}
+          {/* Mode Selector (Sign In vs Register vs 1-Click Demo) */}
           {authMode !== 'forgot' && (
-            <div className="auth-mode-selector">
+            <div className="auth-mode-selector" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <button
                 type="button"
                 className={`mode-btn ${authMode === 'signin' ? 'active' : ''}`}
                 onClick={() => { setAuthMode('signin'); setErrorMessage(''); }}
               >
-                Standard Sign In
+                Sign In
+              </button>
+              <button
+                type="button"
+                className={`mode-btn ${authMode === 'register' ? 'active' : ''}`}
+                onClick={() => { setAuthMode('register'); setErrorMessage(''); }}
+              >
+                Sign Up
               </button>
               <button
                 type="button"
                 className={`mode-btn ${authMode === 'demo' ? 'active' : ''}`}
                 onClick={() => { setAuthMode('demo'); setErrorMessage(''); }}
               >
-                1-Click Demo Personas
+                Demo Roles
               </button>
             </div>
           )}
@@ -501,7 +579,202 @@ export const LoginPage = () => {
           )}
 
           {/* ============================================================== */}
-          {/* TAB 2: 1-Click Demo Personas (For Evaluators & Reviewers)       */}
+          {/* TAB 2: Real User Self-Registration Form                        */}
+          {/* ============================================================== */}
+          {authMode === 'register' && (
+            <form onSubmit={handleRegister} className="auth-form">
+              {/* Role Selection */}
+              <div className="form-group">
+                <label className="form-label">Registering As</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                  {[
+                    { id: 'STUDENT', label: '🎓 Student' },
+                    { id: 'FACULTY_COORDINATOR', label: '👨‍🏫 Faculty' },
+                    { id: 'INSTITUTION_ADMIN', label: '🏛️ Admin' }
+                  ].map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      style={{
+                        padding: '0.55rem 0.4rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        borderRadius: 'var(--radius-md)',
+                        border: regRole === r.id ? '2px solid var(--primary-orange)' : '1px solid var(--border-light)',
+                        background: regRole === r.id ? 'var(--orange-50)' : 'var(--surface-white)',
+                        color: regRole === r.id ? 'var(--primary-orange)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'all 150ms'
+                      }}
+                      onClick={() => setRegRole(r.id)}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Full Name */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-fullname">
+                  Full Name <span style={{ color: 'var(--primary-orange)' }}>*</span>
+                </label>
+                <div className="input-with-icon">
+                  <UserPlus size={18} className="input-icon" />
+                  <input
+                    id="reg-fullname"
+                    type="text"
+                    required
+                    placeholder="e.g. Rahul Sharma"
+                    value={regFullName}
+                    onChange={(e) => setRegFullName(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-email">
+                  Official Email Address <span style={{ color: 'var(--primary-orange)' }}>*</span>
+                </label>
+                <div className="input-with-icon">
+                  <Mail size={18} className="input-icon" />
+                  <input
+                    id="reg-email"
+                    type="email"
+                    required
+                    placeholder="e.g. rahul.sharma@skit.ac.in"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-password">
+                  Password (min 8 characters) <span style={{ color: 'var(--primary-orange)' }}>*</span>
+                </label>
+                <div className="input-with-icon">
+                  <Lock size={18} className="input-icon" />
+                  <input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    placeholder="Choose a secure password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="form-input"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Student Roll / ID (Only for students) */}
+              {regRole === 'STUDENT' && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="reg-student-id">
+                    Student Roll Number / Enrollment ID <span style={{ color: 'var(--primary-orange)' }}>*</span>
+                  </label>
+                  <div className="input-with-icon">
+                    <Award size={18} className="input-icon" />
+                    <input
+                      id="reg-student-id"
+                      type="text"
+                      required
+                      placeholder="e.g. SKIT-2024-CS088"
+                      value={regStudentId}
+                      onChange={(e) => setRegStudentId(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Department */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-department">
+                  Academic Department
+                </label>
+                <select
+                  id="reg-department"
+                  value={regDepartmentCode}
+                  onChange={(e) => setRegDepartmentCode(e.target.value)}
+                  className="form-input"
+                  style={{ height: 42, cursor: 'pointer' }}
+                >
+                  <option value="CS">Computer Science & Engineering (CS)</option>
+                  <option value="IT">Information Technology (IT)</option>
+                  <option value="ECE">Electronics & Communication (ECE)</option>
+                  <option value="ME">Mechanical Engineering (ME)</option>
+                  <option value="CIVIL">Civil Engineering (CE)</option>
+                  <option value="EE">Electrical Engineering (EE)</option>
+                </select>
+              </div>
+
+              {/* Phone (Optional) */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-phone">
+                  Phone Number (Optional)
+                </label>
+                <div className="input-with-icon">
+                  <Phone size={18} className="input-icon" />
+                  <input
+                    id="reg-phone"
+                    type="tel"
+                    placeholder="e.g. +91 98765 43210"
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              {/* Submit CTA */}
+              <button
+                type="submit"
+                className="btn-submit-login"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="btn-loading-content">
+                    <RefreshCw size={17} className="spin-animation" />
+                    <span>Creating Account in PostgreSQL...</span>
+                  </span>
+                ) : (
+                  <span className="btn-normal-content">
+                    <span>Complete Registration</span>
+                    <ArrowRight size={17} />
+                  </span>
+                )}
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: 12, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                Already registered?{' '}
+                <button
+                  type="button"
+                  style={{ color: 'var(--primary-orange)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                  onClick={() => { setAuthMode('signin'); setErrorMessage(''); }}
+                >
+                  Sign in here →
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 3: 1-Click Demo Personas (For Evaluators & Reviewers)       */}
           {/* ============================================================== */}
           {authMode === 'demo' && (
             <div className="demo-personas-container">

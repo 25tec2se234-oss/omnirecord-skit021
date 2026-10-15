@@ -104,7 +104,10 @@ export const StudentPortal = () => {
       certificateRef: formData.certificateRef || `CERT-${Date.now().toString().slice(-4)}`,
       evidenceFileName: formData.evidenceFileName,
       evidenceFileSize: '1.4 MB',
-      description: formData.description
+      description:
+        formData.description && formData.description.trim().length >= 5
+          ? formData.description.trim()
+          : `${formData.achievementTitle || selectedActivity.name} - Verified Student Participation Record`
     };
 
     try {

@@ -24,7 +24,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
     activeRole,
     login,
     logout,
-    refreshBackendData
+    refreshBackendData,
+    navigateTo
   } = useApp();
 
   const [email, setEmail] = useState('studentaffairs@skit.ac.in');
@@ -501,6 +502,27 @@ export const AuthModal = ({ isOpen, onClose }) => {
               </Button>
             </form>
           )}
+
+          {/* Direct link to registration page */}
+          <div style={{ textAlign: 'center', marginTop: 14 }}>
+            <button
+              type="button"
+              style={{
+                fontSize: '0.82rem',
+                color: 'var(--primary-orange)',
+                fontWeight: 600,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                onClose();
+                navigateTo('login');
+              }}
+            >
+              Need a new account? Register as Student or Faculty →
+            </button>
+          </div>
 
           {/* Backend Info Footer */}
           <div
