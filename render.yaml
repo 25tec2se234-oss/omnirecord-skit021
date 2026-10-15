@@ -34,7 +34,7 @@ services:
 
   # 2. Frontend Static Site (React 19 + Vite)
   - type: web
-    name: skit021-student-platform
+    name: pehchaan-skit021
     env: static
     buildCommand: npm run build
     staticPublishPath: ./dist
