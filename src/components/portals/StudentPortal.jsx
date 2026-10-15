@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { StatCard } from '../common/StatCard';
 import { Button } from '../common/Button';
@@ -20,7 +20,9 @@ import {
   Sparkles,
   ExternalLink,
   ShieldCheck,
-  Check
+  Check,
+  Trash2,
+  FileUp
 } from 'lucide-react';
 
 export const StudentPortal = () => {
@@ -80,8 +82,61 @@ export const StudentPortal = () => {
     participationDate: new Date().toISOString().split('T')[0],
     description: '',
     certificateRef: '',
-    evidenceFileName: 'certificate_document.pdf'
+    evidenceFileName: ''
   });
+
+  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      addToast({
+        title: "File Exceeds 10MB Limit",
+        message: "Please choose a certificate file under 10MB.",
+        type: "error"
+      });
+      return;
+    }
+    const validExtensions = /\.(pdf|png|jpe?g)$/i;
+    if (!validExtensions.test(file.name)) {
+      addToast({
+        title: "Unsupported Format",
+        message: "Please upload a PDF document or PNG/JPEG image.",
+        type: "warning"
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    if (file.type && file.type.startsWith('image/')) {
+      setFilePreviewUrl(URL.createObjectURL(file));
+    } else {
+      setFilePreviewUrl(null);
+    }
+    setFormData((prev) => ({
+      ...prev,
+      evidenceFileName: file.name
+    }));
+    addToast({
+      title: "Evidence Attached",
+      message: `${file.name} ready for verification upload.`,
+      type: "info"
+    });
+  };
+
+  const handleRemoveFile = () => {
+    if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+    setSelectedFile(null);
+    setFilePreviewUrl(null);
+    setFormData((prev) => ({
+      ...prev,
+      evidenceFileName: ''
+    }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleAchievementSubmit = async (e) => {
     e.preventDefault();
@@ -102,8 +157,9 @@ export const StudentPortal = () => {
       participationDate: formData.participationDate,
       verificationStatus: 'Pending Review',
       certificateRef: formData.certificateRef || `CERT-${Date.now().toString().slice(-4)}`,
-      evidenceFileName: formData.evidenceFileName,
-      evidenceFileSize: '1.4 MB',
+      evidenceFileName: selectedFile ? selectedFile.name : (formData.evidenceFileName || 'certificate_document.pdf'),
+      evidenceFileSize: selectedFile ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB` : '1.4 MB',
+      file: selectedFile,
       description:
         formData.description && formData.description.trim().length >= 5
           ? formData.description.trim()
@@ -112,7 +168,8 @@ export const StudentPortal = () => {
 
     try {
       await addRecord(submissionPayload);
-      setActiveTab('portfolio');
+      setActiveTab('dashboard');
+      handleRemoveFile();
       setFormData({
         activityId: activities[0]?.id || 'ACT-101',
         achievementTitle: '',
@@ -121,7 +178,7 @@ export const StudentPortal = () => {
         participationDate: new Date().toISOString().split('T')[0],
         description: '',
         certificateRef: '',
-        evidenceFileName: 'certificate_document.pdf'
+        evidenceFileName: ''
       });
     } finally {
       setIsSubmitting(false);
@@ -486,23 +543,83 @@ export const StudentPortal = () => {
 
       {/* TAB 3: SUBMIT ACHIEVEMENT FORM */}
       {activeTab === 'submit' && (
-        <div className="card" style={{ maxWidth: 700, margin: '0 auto', padding: '2rem' }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-              Submit Participation & Achievement Evidence
-            </h3>
-            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-              Upload your authentic credential or certificate for coordinator verification.
-            </p>
+        <div
+          className="card"
+          style={{
+            maxWidth: 740,
+            margin: '0 auto',
+            padding: '2.25rem',
+            borderRadius: 16,
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04)',
+            border: '1px solid var(--border-light)'
+          }}
+        >
+          {/* Form Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 16,
+              marginBottom: '1.75rem',
+              paddingBottom: '1.25rem',
+              borderBottom: '1px solid var(--border-subtle)'
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #FFEDD5 0%, #FFF7ED 100%)',
+                color: 'var(--primary-orange)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(249, 115, 22, 0.2)'
+              }}
+            >
+              <Award size={26} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                Submit Participation & Achievement Evidence
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>
+                Upload authentic credentials for faculty coordinator review and permanent institutional ledger verification.
+              </p>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: 8,
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: 6,
+                  background: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  color: '#166534',
+                  fontSize: '0.74rem',
+                  fontWeight: 600
+                }}
+              >
+                <ShieldCheck size={14} />
+                Institutional Verification Gateway • Encrypted Evidence Storage
+              </div>
+            </div>
           </div>
 
-          <form onSubmit={handleAchievementSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                Select Campus Event / Activity
+          <form onSubmit={handleAchievementSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {/* Event / Activity Selection */}
+            <div className="form-group">
+              <label className="form-label">
+                <span>Select Campus Event / Activity <span className="required">*</span></span>
+                <span style={{ fontSize: '0.74rem', fontWeight: 500, color: 'var(--text-tertiary)' }}>
+                  SKIT Approved Registry
+                </span>
               </label>
               <select
-                className="form-control"
+                className="form-control form-select"
                 value={formData.activityId}
                 onChange={(e) => {
                   const act = activities.find((a) => a.id === e.target.value);
@@ -522,28 +639,29 @@ export const StudentPortal = () => {
               </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                  Achievement Level
+            {/* Achievement Level & Date */}
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">
+                  <span>Achievement Level <span className="required">*</span></span>
                 </label>
                 <select
-                  className="form-control"
+                  className="form-control form-select"
                   value={formData.achievementLevel}
                   onChange={(e) => setFormData({ ...formData, achievementLevel: e.target.value })}
                 >
-                  <option value="Winner (1st Place)">Winner (1st Place)</option>
-                  <option value="Runner-Up (2nd Place)">Runner-Up (2nd Place)</option>
-                  <option value="3rd Position">3rd Position</option>
-                  <option value="Active Participant">Active Participant</option>
-                  <option value="Event Coordinator / Lead">Event Coordinator / Lead</option>
-                  <option value="Volunteer">Volunteer</option>
+                  <option value="Winner">Winner (1st Place)</option>
+                  <option value="Runner-up">Runner-Up (2nd Place)</option>
+                  <option value="Finalist">Finalist / 3rd Position</option>
+                  <option value="Recognition">Special Recognition / Merit</option>
+                  <option value="Participant">Active Participant</option>
+                  <option value="Organizer">Event Coordinator / Student Lead</option>
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                  Participation Date
+              <div className="form-group">
+                <label className="form-label">
+                  <span>Participation Date <span className="required">*</span></span>
                 </label>
                 <input
                   type="date"
@@ -555,9 +673,13 @@ export const StudentPortal = () => {
               </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                Certificate Serial Number / Reference ID
+            {/* Certificate Serial Number */}
+            <div className="form-group">
+              <label className="form-label">
+                <span>Certificate Serial Number / Reference ID</span>
+                <span style={{ fontSize: '0.74rem', fontWeight: 500, color: 'var(--text-tertiary)' }}>
+                  Optional / Auto-generated if left blank
+                </span>
               </label>
               <input
                 type="text"
@@ -566,51 +688,182 @@ export const StudentPortal = () => {
                 value={formData.certificateRef}
                 onChange={(e) => setFormData({ ...formData, certificateRef: e.target.value })}
               />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                Upload Certificate / Evidence File (PDF, PNG, JPG)
-              </label>
-              <div
-                style={{
-                  border: '2px dashed var(--border-light)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  background: 'var(--bg-secondary)',
-                  cursor: 'pointer'
-                }}
-              >
-                <Upload size={24} style={{ color: 'var(--primary-orange)', margin: '0 auto 8px' }} />
-                <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {formData.evidenceFileName || 'Click to select certificate file'}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: 4 }}>
-                  Supported formats: PDF, PNG, JPEG (Max 10MB)
-                </div>
+              <div className="form-hint">
+                Found on your official certificate or letter. Used for cryptographic verification.
               </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
-                Supporting Notes / Description
+            {/* Real Interactive Drag & Drop File Upload */}
+            <div className="form-group">
+              <label className="form-label">
+                <span>Upload Certificate / Evidence File <span className="required">*</span></span>
+                <span style={{ fontSize: '0.74rem', fontWeight: 500, color: 'var(--text-tertiary)' }}>
+                  PDF, PNG, JPG (Max 10MB)
+                </span>
+              </label>
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf,.png,.jpg,.jpeg"
+                style={{ display: 'none' }}
+                onChange={(e) => handleFileSelect(e.target.files?.[0])}
+              />
+
+              {selectedFile ? (
+                /* File Selected Card */
+                <div className="file-preview-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}>
+                    {filePreviewUrl ? (
+                      <img
+                        src={filePreviewUrl}
+                        alt="Preview"
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 8,
+                          objectFit: 'cover',
+                          border: '1px solid var(--border-light)'
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 8,
+                          background: 'var(--orange-100)',
+                          color: 'var(--primary-orange)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <FileText size={22} />
+                      </div>
+                    )}
+                    <div style={{ overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: 320
+                        }}
+                      >
+                        {selectedFile.name}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                        <span className="badge badge-success" style={{ fontSize: '0.68rem', padding: '0.1rem 0.5rem' }}>
+                          <Check size={11} /> Ready to Upload
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="xs"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Change
+                    </Button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-icon"
+                      onClick={handleRemoveFile}
+                      title="Remove file"
+                      style={{ color: 'var(--error)' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Empty Dropzone */
+                <div
+                  className={`file-dropzone ${isDragging ? 'dragging' : ''}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                >
+                  <div className="file-dropzone-icon">
+                    <Upload size={24} />
+                  </div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Click to select certificate file or drag & drop here
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                    Supported formats: PDF, PNG, JPEG (Max 10MB)
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <span className="btn btn-secondary btn-sm" style={{ pointerEvents: 'none' }}>
+                      Browse Local Certificate
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Supporting Notes */}
+            <div className="form-group">
+              <label className="form-label">
+                <span>Supporting Notes / Contribution Description <span className="required">*</span></span>
               </label>
               <textarea
-                rows={2}
-                className="form-control"
-                placeholder="Describe your role, contribution, and any key deliverables..."
+                rows={3}
+                className="form-control form-textarea"
+                placeholder="Describe your role, contributions, project details, and key takeaways (min 5 characters)..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
+              <div className="form-hint">
+                This authentic narrative appears on your public portfolio transcript when verified.
+              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+            {/* Submit & Cancel Buttons */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 12,
+                marginTop: '1.25rem',
+                paddingTop: '1.25rem',
+                borderTop: '1px solid var(--border-subtle)'
+              }}
+            >
               <Button variant="ghost" size="sm" onClick={() => setActiveTab('dashboard')}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting to PostgreSQL...' : 'Submit Evidence for Verification'}
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                disabled={isSubmitting}
+                icon={Upload}
+              >
+                {isSubmitting ? 'Uploading to PostgreSQL...' : 'Submit Evidence for Verification'}
               </Button>
             </div>
           </form>

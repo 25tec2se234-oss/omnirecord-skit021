@@ -74,7 +74,7 @@ export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       const sizeStr = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-      setSimulatedFile({ name: file.name, size: sizeStr });
+      setSimulatedFile({ name: file.name, size: sizeStr, fileObject: file });
       setFormData(prev => ({
         ...prev,
         evidenceFilename: file.name,
@@ -112,6 +112,7 @@ export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
 
     const payload = {
       ...formData,
+      file: simulatedFile?.fileObject,
       studentName: studentObj ? studentObj.name : 'Unknown Student',
       studentRegNo: studentObj ? studentObj.studentId : '',
       studentDepartment: studentObj ? studentObj.departmentName : '',
@@ -239,7 +240,7 @@ export const RecordFormModal = ({ isOpen, onClose, record = null }) => {
               <option value="Winner">Winner (1st Place)</option>
               <option value="Runner-up">Runner-up (2nd / 3rd Place)</option>
               <option value="Recognition">Special Recognition / Merit</option>
-              <option value="Other">Other Institutional Role</option>
+              <option value="Organizer">Organizer / Student Lead</option>
             </select>
           </div>
         </div>

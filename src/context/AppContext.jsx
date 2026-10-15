@@ -544,23 +544,51 @@ export const AppProvider = ({ children }) => {
 
   // Participation Record CRUD & Verification Workflow
   const addRecord = async (newRecord) => {
+    // Normalize achievementLevel to backend Zod enum: 'Winner' | 'Runner-up' | 'Finalist' | 'Recognition' | 'Participant' | 'Organizer'
+    const normalizeLevel = (lvl) => {
+      if (!lvl) return 'Participant';
+      const s = String(lvl).toLowerCase();
+      if (s.includes('winner') || s.includes('1st')) return 'Winner';
+      if (s.includes('runner') || s.includes('2nd')) return 'Runner-up';
+      if (s.includes('finalist') || s.includes('3rd') || s.includes('third')) return 'Finalist';
+      if (s.includes('recognition') || s.includes('merit') || s.includes('special')) return 'Recognition';
+      if (s.includes('organizer') || s.includes('lead') || s.includes('coordinator')) return 'Organizer';
+      return 'Participant';
+    };
+
     if (isBackendConnected) {
       try {
+        const fileName = newRecord.file ? newRecord.file.name : (newRecord.evidenceFileName || newRecord.evidenceFilename || 'certificate_document.pdf');
+        const fileSizeStr = newRecord.file ? `${(newRecord.file.size / (1024 * 1024)).toFixed(1)} MB` : (newRecord.evidenceFileSize || '1.4 MB');
+
         const payload = {
           studentId: newRecord.studentRegNo || newRecord.studentId || 'SKIT-2022-CS014',
           activityId: newRecord.activityId || 'ACT-101',
           participationDate: newRecord.participationDate || new Date().toISOString().split('T')[0],
-          achievementLevel: newRecord.achievementLevel || 'Winner',
+          achievementLevel: normalizeLevel(newRecord.achievementLevel),
           certificateRef: newRecord.certificateRef || `CERT-${Date.now().toString().slice(-4)}`,
           description:
             newRecord.description && newRecord.description.trim().length >= 5
               ? newRecord.description.trim()
               : (newRecord.activityName ? `${newRecord.activityName} - Official Verified Achievement` : 'Official institutional participation record.'),
-          evidenceFilename: newRecord.evidenceFileName || newRecord.evidenceFilename || 'certificate_document.pdf',
-          evidenceFileSize: newRecord.evidenceFileSize || '1.4 MB'
+          evidenceFilename: fileName,
+          evidenceFileSize: fileSizeStr
         };
+
         const res = await api.records.create(payload);
         if (res.data) {
+          // If a real file was provided, upload it to the backend evidence repository
+          if (newRecord.file && newRecord.file instanceof File) {
+            try {
+              const uploadFormData = new FormData();
+              uploadFormData.append('recordId', res.data.id);
+              uploadFormData.append('file', newRecord.file);
+              await api.evidence.upload(uploadFormData);
+            } catch (uploadErr) {
+              console.warn("Evidence binary upload failed, but record metadata was recorded:", uploadErr);
+            }
+          }
+
           setRecords((prev) => [res.data, ...prev]);
           refreshBackendData();
           addToast({
