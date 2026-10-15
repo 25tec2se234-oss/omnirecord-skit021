@@ -50,7 +50,7 @@ export const PortfolioBuilder = () => {
     program: 'B.Tech Computer Science',
     year: '3rd Year',
     departmentName: 'Computer Science & Engineering',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    avatar: null
   });
 
   const [eligibleCredentials, setEligibleCredentials] = useState([]);

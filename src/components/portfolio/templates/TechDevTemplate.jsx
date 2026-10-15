@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Terminal, Code2, ShieldCheck } from 'lucide-react';
+import { UserAvatar } from '../../common/UserAvatar';
 
 export const TechDevTemplate = ({ student, institution, portfolio: _portfolio, credentials = [], isPrint = false }) => {
   // Extract real technical tags strictly from actual record descriptions and categories
@@ -67,37 +68,12 @@ export const TechDevTemplate = ({ student, institution, portfolio: _portfolio, c
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {student.avatar ? (
-              <img
-                src={student.avatar}
-                alt={student.name}
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 'var(--radius-md)',
-                  objectFit: 'cover',
-                  border: '2px solid #F97316'
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 'var(--radius-md)',
-                  background: 'rgba(249, 115, 22, 0.15)',
-                  color: '#F97316',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.4rem',
-                  fontWeight: 800,
-                  border: '1px solid #F97316'
-                }}
-              >
-                &gt;_
-              </div>
-            )}
+            <UserAvatar
+              name={student.name}
+              src={student.avatar}
+              size={64}
+              showBadge={true}
+            />
 
             <div>
               <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: isPrint ? '#0F172A' : '#FFFFFF', letterSpacing: '-0.02em' }}>

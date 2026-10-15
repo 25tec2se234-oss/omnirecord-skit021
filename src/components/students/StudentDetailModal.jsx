@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge, getStatusBadgeVariant } from '../common/Badge';
+import { UserAvatar } from '../common/UserAvatar';
 import { useApp } from '../../context/AppContext';
 import { Award, Mail, Phone, BookOpen, Calendar } from 'lucide-react';
 
@@ -41,10 +42,11 @@ export const StudentDetailModal = ({ isOpen, onClose, student }) => {
       <div>
         {/* Profile Card Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
-          <img
+          <UserAvatar
+            name={student.name}
             src={student.avatar}
-            alt={student.name}
-            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-light)' }}
+            size={64}
+            showBadge={true}
           />
           <div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>

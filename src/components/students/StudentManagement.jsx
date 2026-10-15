@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Breadcrumbs } from '../common/Breadcrumbs';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { UserAvatar } from '../common/UserAvatar';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../common/EmptyState';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -264,10 +265,11 @@ export const StudentManagement = () => {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <img
+                          <UserAvatar
+                            name={student.name}
                             src={student.avatar}
-                            alt=""
-                            style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }}
+                            size={34}
+                            showBadge={false}
                           />
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>

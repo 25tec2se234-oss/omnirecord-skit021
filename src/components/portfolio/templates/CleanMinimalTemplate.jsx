@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, CheckCircle2, Calendar, ShieldCheck } from 'lucide-react';
+import { UserAvatar } from '../../common/UserAvatar';
 
 export const CleanMinimalTemplate = ({ student, institution, portfolio: _portfolio, credentials = [], isPrint = false }) => {
   return (
@@ -29,36 +30,12 @@ export const CleanMinimalTemplate = ({ student, institution, portfolio: _portfol
         }}
       >
         <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-          {student.avatar ? (
-            <img
-              src={student.avatar}
-              alt={student.name}
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid var(--orange-100)'
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                background: 'var(--soft-orange)',
-                color: 'var(--primary-orange)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                fontWeight: 700
-              }}
-            >
-              {student.name ? student.name.charAt(0) : 'S'}
-            </div>
-          )}
+          <UserAvatar
+            name={student.name}
+            src={student.avatar}
+            size={72}
+            showBadge={true}
+          />
 
           <div>
             <div

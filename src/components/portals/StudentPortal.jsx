@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { StatCard } from '../common/StatCard';
 import { Button } from '../common/Button';
 import { Badge, getStatusBadgeVariant } from '../common/Badge';
+import { UserAvatar } from '../common/UserAvatar';
 import {
   Award,
   CheckCircle2,
@@ -40,21 +41,37 @@ export const StudentPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'submit'
   const [portfolioCategoryFilter, setPortfolioCategoryFilter] = useState('ALL');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customAvatar, setCustomAvatar] = useState(null);
 
-  // Match the student profile based on email or default to Aarav Sharma
+  // Match the student profile based on email or default to currentUser / Aarav Sharma
   const currentStudent = useMemo(() => {
     const matched = students.find(
-      (s) => s.email?.toLowerCase() === currentUser?.email?.toLowerCase()
+      (s) => currentUser?.email && s.email?.toLowerCase() === currentUser.email.toLowerCase()
     );
-    return matched || students[0] || {
+    if (matched) return matched;
+
+    if (currentUser?.name || currentUser?.fullName) {
+      return {
+        id: currentUser.id || 'STU-REAL',
+        studentId: currentUser.rollNumber || currentUser.studentId || 'SKIT-2024-0520',
+        name: currentUser.fullName || currentUser.name,
+        email: currentUser.email || 'student@skit.ac.in',
+        departmentName: currentUser.department || 'Information Technology',
+        batch: currentUser.batch || '2022 - 2026',
+        totalCredits: 38,
+        avatar: currentUser.avatar || null
+      };
+    }
+
+    return students[0] || {
       id: 'STU-001',
       studentId: 'STU-2022-001',
-      name: currentUser?.fullName || currentUser?.name || 'Aarav Sharma',
-      email: currentUser?.email || 'aarav.sharma@skit.ac.in',
+      name: 'Aarav Sharma',
+      email: 'aarav.sharma@skit.ac.in',
       departmentName: 'Computer Science & Engineering',
       batch: '2022 - 2026',
       totalCredits: 42,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      avatar: null
     };
   }, [students, currentUser]);
 
@@ -198,16 +215,19 @@ export const StudentPortal = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <img
-              src={currentStudent.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-              alt={currentStudent.name}
-              style={{
-                width: 68,
-                height: 68,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid #fff',
-                boxShadow: 'var(--shadow-md)'
+            <UserAvatar
+              name={currentStudent.name}
+              src={customAvatar || currentStudent.avatar}
+              size={68}
+              showBadge={true}
+              editable={true}
+              onAvatarChange={(newUrl) => {
+                setCustomAvatar(newUrl);
+                addToast({
+                  title: "Profile Photo Updated",
+                  message: "Your profile photo has been updated for this session.",
+                  type: "success"
+                });
               }}
             />
             <div>

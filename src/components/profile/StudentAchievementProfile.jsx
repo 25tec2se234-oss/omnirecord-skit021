@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Breadcrumbs } from '../common/Breadcrumbs';
 import { Button } from '../common/Button';
 import { Badge, getStatusBadgeVariant } from '../common/Badge';
+import { UserAvatar } from '../common/UserAvatar';
 import { CertificatePreviewModal } from './CertificatePreviewModal';
 import {
   Award,
@@ -109,17 +110,11 @@ export const StudentAchievementProfile = () => {
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <img
+            <UserAvatar
+              name={currentStudent.name}
               src={currentStudent.avatar}
-              alt={currentStudent.name}
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid var(--surface-white)',
-                boxShadow: 'var(--shadow-md)'
-              }}
+              size={80}
+              showBadge={true}
             />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

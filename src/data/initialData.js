@@ -81,7 +81,7 @@ export const INITIAL_STUDENTS = [
     program: "B.Tech Computer Science",
     year: "3rd Year",
     status: "Active",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    avatar: null,
     phone: "+91 98201 44521",
     cgpa: "9.2",
     bio: "Passionate about competitive programming, AI research, and smart campus IoT systems."
