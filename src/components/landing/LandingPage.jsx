@@ -27,10 +27,14 @@ export const LandingPage = () => {
     activities,
     isBackendConnected,
     setIsAuthModalOpen,
-    activeRole
+    activeRole,
+    currentUser
   } = useApp();
 
-  const portalRoute = activeRole === 'STUDENT' ? 'student-dashboard' : activeRole === 'FACULTY_COORDINATOR' ? 'organiser-dashboard' : 'dashboard';
+  const isAuthenticated = Boolean(currentUser && currentUser.email);
+  const portalRoute = isAuthenticated
+    ? (activeRole === 'STUDENT' ? 'student-dashboard' : activeRole === 'FACULTY_COORDINATOR' ? 'organiser-dashboard' : 'dashboard')
+    : 'login';
   const pendingCount = records.filter(r => r.verificationStatus === 'Pending Review').length;
 
   return (
@@ -158,7 +162,7 @@ export const LandingPage = () => {
               icon={ArrowRight}
               iconPosition="right"
             >
-              Enter Dashboard
+              {isAuthenticated ? 'Enter Dashboard' : 'Get Started'}
             </Button>
           </div>
         </div>
@@ -208,7 +212,7 @@ export const LandingPage = () => {
               icon={ArrowRight}
               iconPosition="right"
             >
-              Explore the Platform
+              {isAuthenticated ? 'Enter Dashboard' : 'Get Started / Sign In'}
             </Button>
             <Button
               variant="secondary"
@@ -616,11 +620,11 @@ export const LandingPage = () => {
             <Button
               variant="primary"
               size="lg"
-              onClick={() => navigateTo('dashboard')}
+              onClick={() => navigateTo(portalRoute)}
               icon={ArrowRight}
               iconPosition="right"
             >
-              Open Administrator Workspace
+              {isAuthenticated ? 'Open Administrator Workspace' : 'Sign In to Pehchaan'}
             </Button>
             <Button
               variant="secondary"

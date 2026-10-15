@@ -28,8 +28,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
     navigateTo
   } = useApp();
 
-  const [email, setEmail] = useState('studentaffairs@skit.ac.in');
-  const [password, setPassword] = useState('DemoPassword2024!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingDb, setIsSyncingDb] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -58,7 +58,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setSyncMessage('');
     setIsSubmitting(true);
     try {
-      await login(roleEmail, defaultPass);
+      await login(roleEmail, defaultPass, { isDemo: true });
       onClose();
     } catch (err) {
       setAuthError(err.message || 'Quick login failed. Database may need migration or seed.');

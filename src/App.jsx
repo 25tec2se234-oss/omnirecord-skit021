@@ -37,17 +37,28 @@ const MainAppLayout = () => {
     isAuthModalOpen,
     setIsAuthModalOpen,
     publicPortfolioStudentId,
-    navigateTo
+    navigateTo,
+    currentUser
   } = useApp();
 
   const [isGlobalRecordModalOpen, setIsGlobalRecordModalOpen] = useState(false);
 
+  const isAuthenticated = Boolean(currentUser && currentUser.email);
+  const PUBLIC_ROUTES = ['landing', 'login', 'public-portfolio'];
+
   // If new user arrives and enters dashboard without having seen onboarding, launch onboarding
   useEffect(() => {
-    if (!hasCompletedOnboarding && currentRoute !== 'landing') {
+    if (isAuthenticated && !hasCompletedOnboarding && currentRoute !== 'landing') {
       setIsOnboardingOpen(true);
     }
-  }, [hasCompletedOnboarding, currentRoute, setIsOnboardingOpen]);
+  }, [hasCompletedOnboarding, currentRoute, setIsOnboardingOpen, isAuthenticated]);
+
+  // Auth Guard: If attempting to access an internal route without authentication, redirect to login
+  useEffect(() => {
+    if (!isAuthenticated && !PUBLIC_ROUTES.includes(currentRoute)) {
+      navigateTo('login');
+    }
+  }, [isAuthenticated, currentRoute, navigateTo]);
 
   // If on public landing page, render dedicated full-width presentation
   if (currentRoute === 'landing') {
@@ -82,6 +93,16 @@ const MainAppLayout = () => {
           studentId={publicPortfolioStudentId}
           onNavigateHome={() => navigateTo('landing')}
         />
+        <ToastContainer />
+      </>
+    );
+  }
+
+  // Route Guard: If not authenticated and attempting to view any internal page, show LoginPage
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginPage />
         <ToastContainer />
       </>
     );

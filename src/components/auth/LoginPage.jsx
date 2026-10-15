@@ -29,10 +29,10 @@ export const LoginPage = () => {
 
   // Mode: 'signin' | 'register' | 'demo' | 'forgot'
   const [authMode, setAuthMode] = useState('signin');
-  const [email, setEmail] = useState('studentaffairs@skit.ac.in');
-  const [password, setPassword] = useState('DemoPassword2024!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSyncingDb, setIsSyncingDb] = useState(false);
@@ -93,11 +93,21 @@ export const LoginPage = () => {
   const handleSignIn = async (e) => {
     if (e) e.preventDefault();
     setErrorMessage('');
+
+    if (!email || !email.trim()) {
+      setErrorMessage('Please enter your institutional email address.');
+      return;
+    }
+    if (!password) {
+      setErrorMessage('Please enter your account password.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const data = await login(email.trim(), password);
-      const role = data?.user?.role || data?.membership?.role || 'INSTITUTION_ADMIN';
+      const role = data?.user?.role || data?.membership?.role || 'STUDENT';
 
       // Auto-route based on authenticated role
       if (role === 'STUDENT') {
@@ -184,7 +194,7 @@ export const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      await login(persona.email, persona.password);
+      await login(persona.email, persona.password, { isDemo: true });
       navigateTo(persona.portal);
     } catch (err) {
       setErrorMessage(
@@ -532,9 +542,13 @@ export const LoginPage = () => {
                   type="button"
                   className="sso-btn"
                   onClick={() => {
-                    handleQuickLaunchPersona(DEMO_PERSONAS[0]);
+                    addToast({
+                      title: "Institutional Single Sign-On",
+                      message: "Google Workspace SSO requires campus domain OAuth. Please sign in with your email & password or select a role from Demo Roles.",
+                      type: "info"
+                    });
                   }}
-                  title="Simulate SKIT Google Workspace SSO"
+                  title="SKIT Google Workspace SSO"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <path

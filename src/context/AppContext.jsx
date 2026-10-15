@@ -92,11 +92,12 @@ export const getRouteAndParamsFromLocation = () => {
     return { route: matchedRoute, params };
   }
 
-  // Fallback: If on root '/', check whether user was in an active sub-route in this session
+  // Fallback: If on root '/', check whether user had an authenticated active sub-route in this session
   if (pathname === '/') {
     try {
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('skit021_auth_token') : null;
       const savedRoute = sessionStorage.getItem('skit021_active_route');
-      if (savedRoute && savedRoute !== 'landing' && ROUTE_PATH_MAP[savedRoute]) {
+      if (token && savedRoute && savedRoute !== 'landing' && ROUTE_PATH_MAP[savedRoute]) {
         let savedParams = {};
         try {
           const raw = sessionStorage.getItem('skit021_route_params');
@@ -162,15 +163,23 @@ export const AppProvider = ({ children }) => {
   // Backend Connection & User Session State
   const [isBackendConnected, setIsBackendConnected] = useState(false);
   const [isLoadingBackend, setIsLoadingBackend] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() =>
-    safeStorageGet(STORAGE_KEYS.CURRENT_USER, {
-      name: 'Dean of Student Affairs',
-      email: 'studentaffairs@skit.ac.in',
-      role: 'INSTITUTION_ADMIN',
-      institutionCode: 'SKIT-021'
-    })
-  );
-  const [activeRole, setActiveRole] = useState(() => currentUser?.role || 'INSTITUTION_ADMIN');
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('skit021_auth_token') : null;
+      const savedUser = safeStorageGet(STORAGE_KEYS.CURRENT_USER, null);
+      if (token && savedUser && savedUser.email) {
+        return savedUser;
+      }
+      // If there is no auth token, clean up any stale mock user from local storage
+      if (typeof localStorage !== 'undefined' && !token) {
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+  const [activeRole, setActiveRole] = useState(() => currentUser?.role || 'GUEST');
   const [isAuthModalOpen, setIsAuthModalOpenRaw] = useState(false);
   const setIsAuthModalOpen = (open) => {
     if (open) {
@@ -237,11 +246,18 @@ export const AppProvider = ({ children }) => {
   };
 
   // Authenticate user with backend API
-  const login = async (email, password) => {
+  const login = async (email, password, options = {}) => {
+    if (!email || !email.trim()) {
+      throw new Error("Please enter your institutional email address.");
+    }
+    if (!password) {
+      throw new Error("Please enter your password.");
+    }
+
     try {
-      const res = await api.auth.login({ email, password });
+      const res = await api.auth.login({ email: email.trim(), password });
       if (res?.data?.user) {
-        const userRole = res.data.membership?.role || res.data.user.role || 'INSTITUTION_ADMIN';
+        const userRole = res.data.membership?.role || res.data.user.role || 'STUDENT';
         const userObj = {
           ...res.data.user,
           name: res.data.user.fullName || res.data.user.name,
@@ -270,18 +286,11 @@ export const AppProvider = ({ children }) => {
         await refreshBackendData();
         return res.data;
       }
+      throw new Error("Invalid response received from authentication server.");
     } catch (err) {
-      console.warn("Backend auth call failed, evaluating demo persona fallback:", err);
-      const lower = (email || '').toLowerCase();
-      const isDemoPersona =
-        lower.includes('admin') ||
-        lower.includes('studentaffairs') ||
-        lower.includes('coord') ||
-        lower.includes('priya') ||
-        lower.includes('aarav') ||
-        lower.includes('student');
-
-      if (isDemoPersona || !isBackendConnected) {
+      // Only permit demo fallback simulation if the user explicitly clicked a demo persona
+      if (options.isDemo) {
+        const lower = (email || '').toLowerCase();
         const role =
           lower.includes('admin') || lower.includes('studentaffairs')
             ? 'INSTITUTION_ADMIN'
@@ -305,13 +314,15 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(simulatedUser);
         setActiveRole(role);
         addToast({
-          title: "Session Active",
-          message: `Acting as ${simulatedUser.name} (${role})`,
+          title: "Demo Persona Activated",
+          message: `Acting as ${simulatedUser.name} (${role}) in simulation mode.`,
           type: "info"
         });
         return { user: simulatedUser, membership: { role } };
       }
-      throw err;
+
+      console.warn("Authentication failed:", err);
+      throw new Error(err.message || "Invalid email or password. Please verify your credentials or register a new account.");
     }
   };
 
@@ -324,6 +335,8 @@ export const AppProvider = ({ children }) => {
     try {
       localStorage.removeItem('skit021_auth_token');
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      sessionStorage.removeItem('skit021_active_route');
+      sessionStorage.removeItem('skit021_route_params');
     } catch {
       // ignore
     }
